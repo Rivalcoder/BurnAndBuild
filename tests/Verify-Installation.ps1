@@ -24,7 +24,7 @@ Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -Disa
 
 Refresh-SessionEnvironment
 
-Write-LogHeader "Environment Verification & Health Check"
+Write-LogHeader "BurnAndBuild - Environment Verification & Health Check"
 
 $results = @()
 

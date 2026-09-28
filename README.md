@@ -1,12 +1,18 @@
-# Universal Disposable Windows Dev Environment Automation
+# BurnAndBuild: Universal Disposable Dev Environment Automation
 
 [![PowerShell 5.1+](https://img.shields.io/badge/PowerShell-5.1%20%7C%207%2B-blue.svg)](https://microsoft.com/PowerShell)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-brightgreen.svg)]()
+[![Bash 4+](https://img.shields.io/badge/Bash-4%2B-darkgreen.svg)]()
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-brightgreen.svg)]()
+[![Platform: Linux](https://img.shields.io/badge/Platform-Ubuntu%20%7C%20Debian%20%7C%20Fedora%20%7C%20WSL2-orange.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-grade, interactive, modular, and idempotent automation framework designed to configure a fresh, disposable Windows VM into a fully loaded software, AI, web, and mobile development environment in under 10 minutes.
+**BurnAndBuild** is a production-grade, interactive, modular, and idempotent dev environment automation engine designed for disposable cloud VMs, local workstations, and dev containers.
 
-When executed, it **interactively asks which tools you want to install** (Antigravity CLI/IDE, Cursor, OpenAI Codex, Flutter, Node.js, Python, Docker, Java, Android SDK, VS Code, Git, Chrome, Postman, etc.) and provisions only the checked tools.
+> **The Burn & Build Philosophy:**
+> - 🔥 **Burn**: When a trial VM expires, system packages drift, or environments clutter, discard the machine without hesitation.
+> - 🛠️ **Build**: Provision a brand new, fully customized workstation with your exact developer stack in **under 10 minutes**.
+
+When executed, BurnAndBuild **interactively asks which tools you want to install** (or accepts unattended CLI flags) and configures only the selected runtimes, SDKs, IDE extensions, environment variables, PATH, and persistence.
 
 ---
 
@@ -14,43 +20,50 @@ When executed, it **interactively asks which tools you want to install** (Antigr
 
 ```
                                 +----------------------------------------------+
-                                |             Target Disposable VM             |
+                                |      Target Disposable Machine / VM          |
+                                |            (Windows or Linux)                |
                                 +----------------------------------------------+
                                                        |
-                                               [ bootstrap.ps1 ]
+                         +-----------------------------+-----------------------------+
+                         |                                                           |
+                 [ Windows Runner ]                                           [ Linux Runner ]
+              burnandbuild.bat / .ps1                                      burnandbuild.sh / .sh
+                         |                                                           |
+          +-----------------------------+                             +-----------------------------+
+          |  WPF Graphical Checklist    |                             | Interactive Terminal Menu   |
+          |  - Windows WPF GUI Dialog   |                             | - ANSI Checkbox TUI         |
+          |  - Presets & Search         |                             | - Number Toggle & Presets   |
+          +-----------------------------+                             +-----------------------------+
+                         |                                                           |
+                         +-----------------------------+-----------------------------+
                                                        |
-                                      +---------------------------------+
-                                      |   Interactive Tool Selection    |
-                                      |   - WPF GUI Checklist Window    |
-                                      |   - Quick Presets & CLI Menu    |
-                                      +---------------------------------+
+        +----------------------------------------------+----------------------------------------------+
+        |                      |                       |                       |                      |
+[ 01-Base-OS ]         [ 02-Common-CLI ]       [ 03-Runtimes ]         [ 04-Android-SDK ]     [ 05-Flutter-SDK ]
+  - NTFS Long Paths      - Git & GitHub CLI      - Node.js LTS (fnm)     - cmdline-tools        - Flutter Stable
+  - Inotify Watchers     - 7-Zip & jq            - Python 3.12 & uv      - platform-tools (adb) - flutter config
+  - Developer Mode       - ripgrep & fzf         - Java JDK 17 Temurin   - build-tools 34.0.0   - Android Linking
+  - Power / Sleep Off    - pwsh 7 & tmux         - Gradle Build Tool     - Auto Licenses        - flutter doctor
+        |                      |                       |                       |                      |
+        +----------------------------------------------+----------------------------------------------+
                                                        |
-         +---------------------------------------------+---------------------------------------------+
-         |                      |                      |                      |                      |
- [ 01-Base-Windows ]    [ 02-Common-CLI ]      [ 03-Runtimes ]        [ 04-Android-SDK ]     [ 05-Flutter-SDK ]
-   - LongPaths (>260)     - Git for Windows      - Node.js LTS (fnm)    - cmdline-tools        - Flutter Stable SDK
-   - Developer Mode       - 7-Zip / jq / ripgrep - Python 3.12 & uv     - platform-tools (adb) - flutter config
-   - Prevent Sleep        - pwsh 7 / Terminal    - Java JDK 17 (Temurin)- build-tools 34.0.0   - Android Linking
-   - Explorer Tweaks      - GitHub CLI           - Gradle Build Tool    - Auto Licenses        - flutter doctor
-         |                      |                      |                      |                      |
-         +---------------------------------------------+---------------------------------------------+
+        +----------------------------------------------+----------------------------------------------+
+        |                                              |                                              |
+ [ 06-Docker ]                                  [ 07-IDEs-Editors ]                            [ 08-AI-Tools ]
+  - Docker Desktop / Engine                      - VS Code + Dynamic Extensions                 - Google Antigravity CLI (agy)
+  - WSL2 / Linux Daemon Setup                    - Chrome / Brave Browser                       - Google Antigravity IDE
+  - Docker Compose                               - Postman / DBeaver                            - Cursor AI Editor
+  - Rootless User Group                                                                         - OpenAI Codex CLI
+        |                                              |                                              |
+        +----------------------------------------------+----------------------------------------------+
                                                        |
-         +---------------------------------------------+---------------------------------------------+
-         |                                             |                                             |
-  [ 06-Docker ]                                 [ 07-IDEs-Editors ]                           [ 08-AI-Tools ]
-   - Docker Desktop                              - VS Code + Dynamic Extensions                - Antigravity CLI (agy)
-   - WSL2 / Hyper-V Setup                        - Notepad++ / Chrome                          - Antigravity IDE
-   - Docker CLI & Compose                        - Postman / DBeaver                           - Cursor AI Editor
-         |                                             |                               - OpenAI Codex CLI
-         +---------------------------------------------+---------------------------------------------+
+                                           [ Persistence & Profiles ]
+                                            - Workspaces: C:\Workspace or /workspace
+                                            - Cache Redirection (.gradle, pip, uv, pub)
+                                            - SSH Keypair (ED25519) & Git Identity
                                                        |
-                                            [ 09-Persistence-Setup ]
-                                               - Secondary Disk / C:\Workspace
-                                               - Cache Redirection (.gradle, pip, uv, pub)
-                                               - SSH Keypair & Git Identity
-                                                       |
-                                           [ tests/Verify-Installation ]
-                                               - Dynamic Smoke Test for Selected Tools
+                                          [ Verification Smoke Tests ]
+                                            - Dynamic smoke test for all selected tools
 ```
 
 ---
@@ -58,109 +71,164 @@ When executed, it **interactively asks which tools you want to install** (Antigr
 ## Repository Structure
 
 ```
-VM-Tool/
-├── Start-Setup.bat               # Double-clickable one-step launcher with auto-elevation
-├── bootstrap.ps1                 # Master orchestrator with interactive selector & flags
-├── config.json                   # Declarative package catalog, presets, URLs, and settings
+BurnAndBuild/
+├── burnandbuild.bat              # Primary Windows one-click launcher (Auto-Admin)
+├── burnandbuild.ps1              # Primary Windows/PowerShell Core master CLI
+├── burnandbuild.sh               # Primary Linux master orchestrator (Auto-Sudo & TUI)
+├── Start-Setup.bat               # Windows compatibility launcher
+├── Start-Setup.sh                # Linux compatibility launcher
+├── bootstrap.ps1                 # Windows master orchestrator
+├── bootstrap.sh                  # Linux compatibility wrapper
+├── config.json                   # Cross-platform package catalog, URLs & presets
 ├── modules/
-│   ├── ToolSelector.psm1         # Modern WPF GUI checklist & interactive CLI selection engine
-│   ├── Logging.psm1              # Color-coded console logging and persistent file logs
-│   ├── Environment.psm1          # Machine/User PATH management, persistent env vars, session reload
-│   ├── WinGetHelper.psm1         # WinGet detection, dependency bootstrapping, package installation
-│   └── ProcessHelper.psm1        # Safe process execution, exit code verification, retry logic
+│   ├── ToolSelector.psm1         # Windows: Modern WPF GUI & interactive CLI engine
+│   ├── Logging.psm1              # Windows: Color logger & persistent file logs
+│   ├── Environment.psm1          # Windows: System PATH & environment variables
+│   ├── WinGetHelper.psm1         # Windows: WinGet detection & package manager
+│   ├── ProcessHelper.psm1        # Windows: Safe process execution & retries
+│   └── linux/
+│       ├── logging.sh            # Linux: Color logger & persistent file logs
+│       ├── package-manager.sh    # Linux: Distro detection (apt/dnf/pacman) abstraction
+│       └── tool-selector.sh      # Linux: Interactive terminal checklist TUI
 ├── scripts/
-│   ├── 01-Base-Windows.ps1       # Long paths, dev mode, power settings, explorer options
-│   ├── 02-Common-CLI.ps1         # 7-Zip, Git, jq, ripgrep, fzf, PowerShell 7, Terminal, gh
-│   ├── 03-Runtimes.ps1           # Node (fnm), Python (uv), Java (Temurin 17), Gradle
-│   ├── 04-Android-SDK.ps1        # Android cmdline-tools, platform-tools, build-tools, licenses
-│   ├── 05-Flutter-SDK.ps1        # Google Flutter SDK, PATH, Android/Java linking, flutter doctor
-│   ├── 06-Docker.ps1             # Docker Desktop, WSL2/Virtualization prerequisites, CLI PATH
-│   ├── 07-IDEs-Editors.ps1       # VS Code (+ dynamic extensions for selected tools), Chrome, Postman
-│   ├── 08-AI-Tools.ps1           # Antigravity CLI (agy), Antigravity IDE, Cursor, OpenAI Codex
-│   ├── 08-Shell-Profile.ps1      # PowerShell profile, posh-git, PSReadLine prediction, aliases
-│   └── 09-Persistence-Setup.ps1  # Git identity, SSH key generation, cache redirection (.cache)
+│   ├── 01-Base-Windows.ps1       # Windows: Long paths, dev mode, power, explorer
+│   ├── 02-Common-CLI.ps1         # Windows: 7-Zip, Git, jq, ripgrep, fzf, pwsh 7, gh
+│   ├── 03-Runtimes.ps1           # Windows: Node (fnm), Python (uv), Java 17, Gradle
+│   ├── 04-Android-SDK.ps1        # Windows: Android cmdline-tools, platform-tools, licenses
+│   ├── 05-Flutter-SDK.ps1        # Windows: Flutter SDK, PATH, Java linking, doctor
+│   ├── 06-Docker.ps1             # Windows: Docker Desktop & WSL2 integration
+│   ├── 07-IDEs-Editors.ps1       # Windows: VS Code + extensions, Chrome, Postman, DBeaver
+│   ├── 08-AI-Tools.ps1           # Windows: Antigravity CLI/IDE, Cursor, Codex CLI
+│   ├── 08-Shell-Profile.ps1      # Windows: PowerShell profile, completions & aliases
+│   ├── 09-Persistence-Setup.ps1  # Windows: Git identity, SSH key, cache redirection
+│   └── linux/
+│       ├── 01-base-linux.sh      # Linux: Inotify watchers, build-essential, /workspace
+│       ├── 02-common-cli.sh      # Linux: Git, GitHub CLI, jq, ripgrep, fzf, tmux, zsh
+│       ├── 03-runtimes.sh        # Linux: Node (fnm), Python 3 & uv, JDK 17, Gradle
+│       ├── 04-android-sdk.sh     # Linux: Android cmdline-tools, platform-tools, licenses
+│       ├── 05-flutter-sdk.sh     # Linux: Flutter stable SDK, android link, doctor
+│       ├── 06-docker.sh          # Linux: Docker Engine, Compose plugin, user group
+│       ├── 07-ides-editors.sh    # Linux: VS Code + extensions, Chrome, Postman, DBeaver
+│       ├── 08-ai-tools.sh        # Linux: Antigravity CLI, IDE, Cursor, Codex
+│       ├── 09-shell-profile.sh   # Linux: /etc/profile.d, exports, developer aliases
+│       └── 10-persistence-setup.sh # Linux: /workspace, SSH ED25519 key, Git config
 ├── tests/
-│   └── Verify-Installation.ps1   # Dynamic smoke test verifying only selected tools & env vars
+│   ├── Verify-Installation.ps1   # Windows: Dynamic smoke test for selected tools
+│   └── verify-installation.sh    # Linux: Dynamic smoke test for selected tools
 ├── docs/
-│   ├── GOLDEN_IMAGE_GUIDE.md     # Sysprep, Cloud Snapshots (Azure, AWS, GCP, Proxmox)
-│   ├── DATA_PERSISTENCE.md       # How to isolate code, keys, and caches from the VM
-│   └── DISASTER_RECOVERY.md      # Step-by-step checklist when a VM expires
+│   ├── DISASTER_RECOVERY.md      # Rapid recovery playbook (Windows & Linux)
+│   ├── DATA_PERSISTENCE.md       # Disk isolation & cache redirection strategy
+│   └── GOLDEN_IMAGE_GUIDE.md     # Golden master image creation (Cloud & Hypervisors)
 └── README.md
 ```
 
 ---
 
-## How to Run
+## Quickstart Guide
 
-### Method 1: Double-Click Launcher (Easiest)
+### 🪟 Windows Setup
 
-Double-click **`Start-Setup.bat`** in File Explorer. It automatically prompts for Administrator rights and opens the interactive Tool Selection checklist!
+#### Method 1: Double-Click Launcher (Easiest)
+Double-click **`burnandbuild.bat`** (or `Start-Setup.bat`) in File Explorer. It automatically prompts for Administrator rights and opens the interactive graphical checklist window.
 
-### Method 2: PowerShell Terminal
-
-Open **PowerShell as Administrator** and run:
-
+#### Method 2: Elevated PowerShell
+Open **PowerShell as Administrator** and execute:
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
-.\bootstrap.ps1
+.\burnandbuild.ps1
 ```
 
-A modern graphical window will appear allowing you to check or uncheck which tools to install.
+---
+
+### 🐧 Linux Setup (Ubuntu, Debian, Fedora, WSL2)
+
+#### Interactive Terminal Checklist Menu:
+Clone or download the repository, then run:
+```bash
+chmod +x burnandbuild.sh
+sudo ./burnandbuild.sh
+```
+A clean, interactive terminal checklist will appear allowing you to toggle tools by number (e.g. `1,3,5`), apply one-letter presets (`AI`, `M`, `W`, `D`, `A`, `C`), and press **ENTER** to provision.
 
 ---
 
-## Interactive Tool Selection Dialog
+## Unattended & Headless Execution
 
-When launched, the tool prompts you with:
-- **Checkboxes for all tools:**
-  - 🤖 **AI & Autonomous Agents**: Antigravity CLI (`agy`), Antigravity IDE, Cursor AI Editor, OpenAI Codex CLI
-  - 📱 **Mobile Development**: Flutter SDK, Android SDK & Tools, Java JDK 17 (Temurin)
-  - 🌐 **Web & Backend Runtimes**: Node.js LTS & npm (via fnm), Python 3.12 & uv, Gradle
-  - 🐳 **Containers & Cloud**: Docker Desktop
-  - 💻 **Core CLI**: Git for Windows, GitHub CLI, 7-Zip, jq, ripgrep, fzf, PowerShell 7, Windows Terminal
-  - 📝 **IDEs & Editors**: VS Code (+ dynamic extensions for your chosen runtimes), Notepad++
-  - 🛠️ **API & Database**: Postman, DBeaver Community
-  - 📊 **Data & Analytics**: Microsoft Power BI Desktop
-  - 📋 **Project Management**: Atlassian Jira CLI (`acli`) & Tools, VS Code Jira integration
-  - 🌐 **Browsers**: Google Chrome, Brave Browser
-  - ⚙️ **Windows Optimizations**: NTFS Long Paths (>260 chars), Developer Mode, Never Sleep
-- **One-Click Quick Presets:**
-  - `[ AI & Agents ]`: Antigravity CLI + Antigravity IDE + Cursor + Codex + Git + Node + Python + VS Code
-  - `[ Mobile / Flutter ]`: Flutter + Android SDK + Java 17 + Git + VS Code + Chrome
-  - `[ Full-Stack Web ]`: Node.js + Python + Docker + Git + VS Code + Chrome + Postman
-  - `[ Docker & DevOps ]`: Docker + Python + Git + PowerShell 7 + VS Code
-  - `[ Select All ]`: Selects all 21 tools in catalog
-  - `[ Clear All ]`: Unchecks all tools
-- **Start Installation**: Begins installing only the checked items!
+For CI/CD pipelines, cloud-init, Azure Custom Script Extensions, Packer golden images, or SSH:
+
+| Workflow | Windows PowerShell Command | Linux Bash Command |
+| :--- | :--- | :--- |
+| **Interactive Selection** | `.\burnandbuild.ps1` | `sudo ./burnandbuild.sh` |
+| **Console Menu Only** | `.\burnandbuild.ps1 -NoGui` | `sudo ./burnandbuild.sh --cli` |
+| **AI & Autonomous Agents** | `.\burnandbuild.ps1 -Preset "ai"` | `sudo ./burnandbuild.sh --preset ai` |
+| **Mobile / Flutter Preset** | `.\burnandbuild.ps1 -Preset "mobile"` | `sudo ./burnandbuild.sh --preset mobile` |
+| **Full-Stack Web Preset** | `.\burnandbuild.ps1 -Preset "web"` | `sudo ./burnandbuild.sh --preset web` |
+| **DevOps / Containers Preset** | `.\burnandbuild.ps1 -Preset "devops"` | `sudo ./burnandbuild.sh --preset devops` |
+| **Specific Tools Only** | `.\burnandbuild.ps1 -Tools "antigravityCli,cursor,node,python"` | `sudo ./burnandbuild.sh --tools "antigravityCli,cursor,node,python"` |
+| **Install Entire Catalog** | `.\burnandbuild.ps1 -Full` | `sudo ./burnandbuild.sh --full` |
+| **Minimal (CLI & Base)** | `.\burnandbuild.ps1 -BaseOnly` | `sudo ./burnandbuild.sh --base-only` |
+| **With Git Credentials** | `.\burnandbuild.ps1 -GitName "Jane" -GitEmail "j@ex.com"` | `sudo ./burnandbuild.sh --git-name "Jane" --git-email "j@ex.com"` |
 
 ---
 
-## Headless & Automated (Unattended) Execution
+## Tool Catalog & Presets
 
-For automated pipelines (Azure DevOps, GitHub Actions, Packer, Golden Images, or SSH):
+BurnAndBuild includes 21 declarative components organized into logical categories:
 
-| Command | Action |
-| :--- | :--- |
-| `.\bootstrap.ps1` | **Interactive mode** (opens GUI Checklist dialog). |
-| `.\bootstrap.ps1 -NoGui` | **Interactive console mode** (numbered terminal menu). |
-| `.\bootstrap.ps1 -Preset "ai"` | Installs **Antigravity CLI/IDE, Cursor, Codex, Git, Node, Python, VS Code**. |
-| `.\bootstrap.ps1 -Tools "antigravity, cursor, codex, flutter, node, docker"` | Installs only specified tools. |
-| `.\bootstrap.ps1 -Preset "mobile"` | Installs the Flutter & Android Mobile preset unattended. |
-| `.\bootstrap.ps1 -Preset "web"` | Installs the Full-Stack Web preset unattended. |
-| `.\bootstrap.ps1 -Full` | Installs everything in the catalog unattended. |
-| `.\bootstrap.ps1 -BaseOnly` | Only Base Windows settings and CLI tools. |
-| `.\bootstrap.ps1 -GitName "Jane Doe" -GitEmail "jane@example.com"` | Passes identity parameters. |
+- 🤖 **AI & Autonomous Agents**: Google Antigravity CLI (`agy`), Google Antigravity IDE, Cursor AI Editor, OpenAI Codex CLI
+- 📱 **Mobile Development**: Flutter SDK, Android SDK & Tools (`adb`, `sdkmanager`), Java JDK 17 (Temurin / OpenJDK)
+- 🌐 **Web & Backend Runtimes**: Node.js LTS (via `fnm`), Python 3.12 & `uv`, Gradle Build Tool
+- 🐳 **Containers & Cloud**: Docker Desktop / Docker Engine & Docker Compose
+- 💻 **Core CLI**: Git, GitHub CLI (`gh`), 7-Zip (`p7zip`), jq, ripgrep (`rg`), fzf, PowerShell 7, Windows Terminal, tmux, zsh
+- 📝 **IDEs & Editors**: VS Code (+ dynamic extensions tailored to chosen tools), Notepad++ / Micro
+- 🛠️ **API & Database**: Postman, DBeaver Community
+- 📊 **Data & Analytics**: Microsoft Power BI Desktop / Web integration
+- 📋 **Project Management**: Atlassian Jira CLI (`acli`) & VS Code Jira integration
+- 🌐 **Browsers**: Google Chrome, Brave Browser
+- ⚙️ **System Optimizations**: Win32 Long Paths (>260 chars), Dev Mode, Linux Inotify Watches (`fs.inotify.max_user_watches = 524288`)
+
+### Available Presets
+- `[ AI & Agents ]`: Antigravity CLI + Antigravity IDE + Cursor + Codex + Git + Node.js + Python + VS Code + Base OS
+- `[ Mobile / Flutter ]`: Flutter + Android SDK + Java 17 + Gradle + Git + VS Code + Chrome + Base OS
+- `[ Full-Stack Web ]`: Node.js + Python + Docker + Git + VS Code + Chrome + Postman + Base OS
+- `[ Docker & DevOps ]`: Docker + Python + Git + PowerShell 7 + VS Code + Base OS
+- `[ Select All ]`: Provisions all 21 tools in catalog
+- `[ Clear All ]`: Clears selection for custom checkmarks
 
 ---
 
-## Verification & Health Check
+## Dynamic Verification & Health Check
 
-Run the dynamic smoke test anytime to ensure your installed tools, paths, and environment variables are healthy:
+Run the dynamic validation smoke test at any time to verify that your selected tools, binaries, and environment variables are active and healthy:
 
+### On Windows:
 ```powershell
-# Verifies all installed tools
+# Verify all installed tools
 .\tests\Verify-Installation.ps1
 
 # Or verify specific tools
-.\tests\Verify-Installation.ps1 -SelectedTools "antigravityIde", "flutter", "node"
+.\tests\Verify-Installation.ps1 -SelectedTools "antigravityCli", "flutter", "node", "docker"
 ```
+
+### On Linux:
+```bash
+# Verify all installed tools
+./tests/verify-installation.sh
+
+# Or verify specific tools
+./tests/verify-installation.sh antigravityCli flutter node docker
+```
+
+---
+
+## Documentation Guides
+
+- 📘 [Disaster Recovery Playbook](docs/DISASTER_RECOVERY.md): Step-by-step 10-minute recovery when a cloud VM expires.
+- 💾 [Data Persistence & Cache Isolation](docs/DATA_PERSISTENCE.md): Retaining source code, SSH keys, and package caches across disposable VM rebuilds.
+- 🖼️ [Golden Master Image Guide](docs/GOLDEN_IMAGE_GUIDE.md): Converting configured environments into reusable templates across Azure, AWS, GCP, and Proxmox.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

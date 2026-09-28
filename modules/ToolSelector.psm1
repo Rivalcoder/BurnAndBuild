@@ -58,7 +58,7 @@ function Show-ToolSelectionGui {
     $xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Windows Dev VM Provisioner - Tool Selection"
+        Title="BurnAndBuild - Dev Environment Provisioner"
         Height="820" Width="860" MinHeight="680" MinWidth="740"
         WindowStartupLocation="CenterScreen"
         Background="#0F172A" Foreground="#F8FAFC"
@@ -96,8 +96,8 @@ function Show-ToolSelectionGui {
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="Windows Dev Environment Provisioner" FontSize="19" FontWeight="Bold" Foreground="#38BDF8"/>
-                    <TextBlock Text="Select developer tools, runtimes, and frameworks to install on this VM:"
+                    <TextBlock Text="BurnAndBuild Provisioner" FontSize="19" FontWeight="Bold" Foreground="#38BDF8"/>
+                    <TextBlock Text="Select developer tools, runtimes, and frameworks to build on this VM:"
                                FontSize="12.5" Foreground="#CBD5E1" Margin="0,3,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
                 <Border Grid.Column="1" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="12,6" VerticalAlignment="Center">
@@ -384,7 +384,7 @@ function Show-ToolSelectionCli {
     while ($true) {
         Clear-Host
         Write-Host "================================================================================" -ForegroundColor Cyan
-        Write-Host "       WINDOWS DEV ENVIRONMENT PROVISIONER - TOOL SELECTION MENU" -ForegroundColor Cyan
+        Write-Host "         BURNANDBUILD - DEV ENVIRONMENT TOOL SELECTION MENU" -ForegroundColor Cyan
         Write-Host "================================================================================" -ForegroundColor Cyan
         Write-Host " Toggle any tool number to check/uncheck. Press [ENTER] to start installation.`n" -ForegroundColor DarkGray
 

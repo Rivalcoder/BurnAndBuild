@@ -10,9 +10,9 @@ function Initialize-Logger {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [string]$LogDirectory = "C:\Logs\VM-Setup",
+        [string]$LogDirectory = "C:\Logs\BurnAndBuild",
         [Parameter(Mandatory = $false)]
-        [string]$Prefix = "vm-setup"
+        [string]$Prefix = "burnandbuild"
     )
 
     if (-not (Test-Path -Path $LogDirectory)) {

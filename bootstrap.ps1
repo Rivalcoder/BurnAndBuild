@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Universal Bootstrap Orchestrator for Disposable Windows Development VMs.
+    BurnAndBuild - Master Orchestrator for Disposable Development VMs.
 
 .DESCRIPTION
-    Interactive & automated setup for Windows 10/11 and Windows Server.
+    Interactive & automated setup for Windows 10/11, Windows Server, and Linux.
     Prompts the user to select which tools to install (Antigravity CLI/IDE, Cursor,
     Codex, Flutter, Node.js, Python, Docker, Java JDK, Android SDK, VS Code, Git, etc.),
     and configures the selected tools, environment variables, PATH, and persistence.
@@ -122,12 +122,12 @@ Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -Dis
 Import-Module (Join-Path -Path $modulesPath -ChildPath "ToolSelector.psm1") -DisableNameChecking
 
 # 3. Initialize Logger
-$logDir = "C:\Logs\VM-Setup"
-Initialize-Logger -LogDirectory $logDir -Prefix "bootstrap"
+$logDir = "C:\Logs\BurnAndBuild"
+Initialize-Logger -LogDirectory $logDir -Prefix "burnandbuild"
 
 Write-Host @"
 ================================================================================
-          WINDOWS DISPOSABLE DEV ENVIRONMENT - MASTER BOOTSTRAP
+          BURNANDBUILD - DISPOSABLE DEV ENVIRONMENT ORCHESTRATOR
 ================================================================================
   Target OS       : $([System.Environment]::OSVersion.VersionString)
   Architecture    : $([System.Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE"))
@@ -268,7 +268,7 @@ try {
 
     Write-Host ""
     Write-Host "================================================================================" -ForegroundColor Green
-    Write-Log -Level SUCCESS -Message "DISPOSABLE VM ENVIRONMENT SETUP COMPLETED IN $([math]::Round($stopwatch.Elapsed.TotalMinutes, 2)) MINUTES!"
+    Write-Log -Level SUCCESS -Message "BURNANDBUILD DEV ENVIRONMENT SETUP COMPLETED IN $([math]::Round($stopwatch.Elapsed.TotalMinutes, 2)) MINUTES!"
     Write-Host "================================================================================" -ForegroundColor Green
     Write-Host ""
 

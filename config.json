@@ -1,19 +1,23 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "metadata": {
-    "name": "Windows Disposable Dev Environment Automation",
-    "description": "Enterprise-grade automation framework for setting up disposable Windows VMs for software, web, mobile, and AI development."
+    "name": "BurnAndBuild - Disposable Dev Environment Automation",
+    "description": "High-velocity automation framework to burn disposable VMs and rebuild pristine, full-stack software, mobile, AI, and DevOps development environments in minutes on Windows & Linux."
   },
   "settings": {
     "workspaceRoot": "C:\\Workspace",
+    "linuxWorkspaceRoot": "/workspace",
     "toolsDirectory": "C:\\Tools",
-    "logDirectory": "C:\\Logs\\VM-Setup",
+    "linuxToolsDirectory": "/opt",
+    "logDirectory": "C:\\Logs\\BurnAndBuild",
+    "linuxLogDirectory": "/var/log/burnandbuild",
     "enableLongPaths": true,
     "enableDeveloperMode": true,
     "preventSleep": true,
     "showFileExtensions": true,
-    "showHiddenFiles": true
+    "showHiddenFiles": true,
+    "linuxMaxUserWatches": 524288
   },
   "selectableTools": [
     {
@@ -305,13 +309,17 @@
   },
   "flutterSdk": {
     "installDirectory": "C:\\Tools\\flutter",
+    "linuxInstallDirectory": "/opt/flutter",
     "gitRepoUrl": "https://github.com/flutter/flutter.git",
     "gitBranch": "stable",
-    "releasesJsonUrl": "https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json"
+    "releasesJsonUrl": "https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json",
+    "linuxTarUrl": "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.3-stable.tar.xz"
   },
   "androidSdk": {
     "installDirectory": "C:\\Android\\android-sdk",
+    "linuxInstallDirectory": "/opt/android-sdk",
     "cmdlineToolsZipUrl": "https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip",
+    "linuxCmdlineToolsZipUrl": "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip",
     "cmdlineToolsVersion": "11076708",
     "packagesToInstall": [
       "platform-tools",
@@ -321,6 +329,39 @@
       "extras;google;m2repository"
     ]
   },
+  "linuxPackages": {
+    "aiTools": {
+      "antigravityCli": {
+        "url": "https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.12-5784551402897408/linux-x64/cli_linux_x64",
+        "binaryName": "agy"
+      },
+      "cursor": {
+        "url": "https://downloader.cursor.sh/linux/appImage/x64",
+        "binaryName": "cursor"
+      },
+      "codex": {
+        "url": "https://github.com/openai/codex/releases/download/rust-v0.158.0/codex-x86_64-unknown-linux-musl.tar.gz",
+        "binaryName": "codex"
+      }
+    },
+    "gradle": {
+      "url": "https://services.gradle.org/distributions/gradle-8.7-bin.zip",
+      "installDirectory": "/opt/gradle"
+    },
+    "apt": {
+      "base": ["build-essential", "curl", "wget", "gnupg", "ca-certificates", "software-properties-common", "apt-transport-https", "unzip", "tar", "gzip"],
+      "coreCli": ["git", "jq", "ripgrep", "fzf", "p7zip-full", "tmux", "zsh"],
+      "java": ["openjdk-17-jdk", "openjdk-17-jre-headless"],
+      "python": ["python3", "python3-pip", "python3-venv", "python3-dev"],
+      "dbeaver": ["dbeaver-ce"]
+    },
+    "dnf": {
+      "base": ["@development-tools", "curl", "wget", "gnupg2", "ca-certificates", "unzip", "tar", "gzip"],
+      "coreCli": ["git", "jq", "ripgrep", "fzf", "p7zip", "tmux", "zsh"],
+      "java": ["java-17-openjdk-devel"],
+      "python": ["python3", "python3-pip", "python3-devel"]
+    }
+  },
   "environmentVariables": {
     "machine": [
       { "name": "JAVA_HOME", "value": "C:\\Program Files\\Eclipse Adoptium\\jdk-17" },
@@ -329,6 +370,13 @@
       { "name": "FLUTTER_HOME", "value": "C:\\Tools\\flutter" },
       { "name": "GRADLE_HOME", "value": "C:\\Tools\\gradle" }
     ],
+    "linuxEnvironment": {
+      "JAVA_HOME": "/usr/lib/jvm/java-17-openjdk-amd64",
+      "ANDROID_HOME": "/opt/android-sdk",
+      "ANDROID_SDK_ROOT": "/opt/android-sdk",
+      "FLUTTER_HOME": "/opt/flutter",
+      "GRADLE_HOME": "/opt/gradle/gradle-8.7"
+    },
     "pathAdditions": [
       "C:\\Tools\\flutter\\bin",
       "C:\\Android\\android-sdk\\cmdline-tools\\latest\\bin",
@@ -338,6 +386,16 @@
       "C:\\Program Files\\Git\\cmd",
       "C:\\Program Files\\PowerShell\\7",
       "C:\\Program Files\\Docker\\Docker\\resources\\bin"
+    ],
+    "linuxPathAdditions": [
+      "/opt/flutter/bin",
+      "/opt/android-sdk/cmdline-tools/latest/bin",
+      "/opt/android-sdk/platform-tools",
+      "/opt/android-sdk/build-tools/34.0.0",
+      "/opt/gradle/bin",
+      "/usr/local/bin",
+      "$HOME/.local/bin",
+      "$HOME/.cargo/bin"
     ]
   },
   "vscode": {

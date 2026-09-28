@@ -1,6 +1,6 @@
-# Golden Image & Master VM Guide for Windows
+# BurnAndBuild Golden Image & Master VM Guide (Windows & Linux)
 
-This guide explains how to convert a configured Windows development environment into a reusable **Golden Master Image** across major cloud platforms (Azure, AWS, GCP) and hypervisors (Hyper-V, Proxmox).
+This guide explains how to convert a configured BurnAndBuild development environment into a reusable **Golden Master Image** across major cloud platforms (Azure, AWS, GCP) and hypervisors (Hyper-V, Proxmox, KVM).
 
 ---
 
