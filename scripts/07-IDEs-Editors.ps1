@@ -34,25 +34,47 @@ if (Should-InstallTool "chrome") {
     Install-WinPackage -PackageId "Google.Chrome" -DisplayName "Google Chrome"
 }
 
-# 2. Notepad++
+# 2. Brave Browser
+if (Should-InstallTool "brave") {
+    Write-Log -Level STEP -Message "Configuring Brave Browser..."
+    Install-WinPackage -PackageId "Brave.Brave" -DisplayName "Brave Browser"
+}
+
+# 3. Notepad++
 if (Should-InstallTool "notepadpp") {
     Write-Log -Level STEP -Message "Configuring Notepad++..."
     Install-WinPackage -PackageId "Notepad++.Notepad++" -DisplayName "Notepad++"
 }
 
-# 3. Postman API Client
+# 4. Postman API Client
 if (Should-InstallTool "postman") {
     Write-Log -Level STEP -Message "Configuring Postman API Platform..."
     Install-WinPackage -PackageId "Postman.Postman" -DisplayName "Postman"
 }
 
-# 4. DBeaver Universal Database Tool
+# 5. DBeaver Universal Database Tool
 if (Should-InstallTool "dbeaver") {
     Write-Log -Level STEP -Message "Configuring DBeaver Community..."
     Install-WinPackage -PackageId "DBeaver.DBeaver" -DisplayName "DBeaver Community"
 }
 
-# 5. Visual Studio Code & Tailored Extensions
+# 6. Microsoft Power BI Desktop
+if (Should-InstallTool "powerbi") {
+    Write-Log -Level STEP -Message "Configuring Microsoft Power BI Desktop..."
+    Install-WinPackage -PackageId "Microsoft.PowerBI" -DisplayName "Microsoft Power BI Desktop"
+}
+
+# 7. Atlassian Jira CLI & Tools
+if (Should-InstallTool "jira") {
+    Write-Log -Level STEP -Message "Configuring Atlassian Jira CLI & Tools..."
+    $installedAcli = Install-WinPackage -PackageId "Atlassian.AtlassianCLI" -DisplayName "Atlassian CLI (acli)"
+    if (-not $installedAcli) {
+        Write-Log -Level INFO -Message "Trying alternative Jira Ticket CLI package..."
+        Install-WinPackage -PackageId "OpenCLICollective.jira-ticket-cli" -DisplayName "Jira Ticket CLI (jtk)"
+    }
+}
+
+# 8. Visual Studio Code & Tailored Extensions
 if (Should-InstallTool "vscode") {
     Write-Log -Level STEP -Message "Configuring Visual Studio Code..."
     Install-WinPackage -PackageId "Microsoft.VisualStudioCode" -DisplayName "Visual Studio Code"

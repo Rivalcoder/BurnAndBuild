@@ -323,6 +323,66 @@ if (Should-Verify "codex") {
     }
 }
 
+# 19. Browsers: Brave Browser
+if (Should-Verify "brave") {
+    $results += Test-Component "Brave Browser" {
+        $bravePaths = @(
+            "C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+            "C:\Program Files (x86)\BraveSoftware\Brave-Browser\Application\brave.exe",
+            "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\Application\brave.exe"
+        )
+        $found = $bravePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($found) {
+            "Installed at: $found"
+        } else {
+            throw "brave.exe not found in standard directories"
+        }
+    }
+}
+
+# 20. Analytics: Microsoft Power BI Desktop
+if (Should-Verify "powerbi") {
+    $results += Test-Component "Power BI Desktop" {
+        $pbiPaths = @(
+            "C:\Program Files\Microsoft Power BI Desktop\bin\PBIDesktop.exe",
+            "C:\Program Files (x86)\Microsoft Power BI Desktop\bin\PBIDesktop.exe"
+        )
+        $found = $pbiPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($found) {
+            "Installed at: $found"
+        } else {
+            $pbiCmd = Get-Command "PBIDesktop.exe" -ErrorAction SilentlyContinue
+            if ($pbiCmd) { "Detected at: $($pbiCmd.Source)" } else { throw "PBIDesktop.exe not found in Program Files" }
+        }
+    }
+}
+
+# 21. Project Management: Atlassian Jira CLI & Tools
+if (Should-Verify "jira") {
+    $results += Test-Component "Jira CLI / Tools" {
+        $cmd = Get-Command "acli.exe" -ErrorAction SilentlyContinue
+        if (-not $cmd) { $cmd = Get-Command "acli" -ErrorAction SilentlyContinue }
+        if (-not $cmd) { $cmd = Get-Command "jtk.exe" -ErrorAction SilentlyContinue }
+        if (-not $cmd) { $cmd = Get-Command "jira.exe" -ErrorAction SilentlyContinue }
+        if ($cmd) {
+            "Detected CLI: $($cmd.Name) at $($cmd.Source)"
+        } else {
+            $codeCmd = Get-Command "code.cmd" -ErrorAction SilentlyContinue
+            if (-not $codeCmd) { $codeCmd = Get-Command "code.exe" -ErrorAction SilentlyContinue }
+            if ($codeCmd) {
+                $exts = & $codeCmd --list-extensions 2>$null
+                if ($exts -contains "Atlassian.atlascode") {
+                    "Atlassian VS Code extension installed (Atlassian.atlascode)"
+                } else {
+                    throw "acli/jira CLI or Atlassian VS Code extension not found"
+                }
+            } else {
+                throw "acli/jira CLI not found on PATH"
+            }
+        }
+    }
+}
+
 # Print Summary Table
 Write-Host ""
 Write-Host "========================= VALIDATION SUMMARY =========================" -ForegroundColor Cyan

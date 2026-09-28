@@ -144,6 +144,15 @@
       "defaultChecked": true
     },
     {
+      "id": "brave",
+      "name": "Brave Browser",
+      "category": "Browsers & Utilities",
+      "tag": "Browser",
+      "description": "Privacy-focused high performance Chromium browser with ad/tracker blocking",
+      "defaultChecked": false,
+      "wingetId": "Brave.Brave"
+    },
+    {
       "id": "postman",
       "name": "Postman API Client",
       "category": "API & Database Tools",
@@ -158,6 +167,24 @@
       "tag": "Database",
       "description": "Universal database manager for PostgreSQL, MySQL, SQLite, and more",
       "defaultChecked": false
+    },
+    {
+      "id": "powerbi",
+      "name": "Microsoft Power BI Desktop",
+      "category": "Data & Analytics Tools",
+      "tag": "Analytics",
+      "description": "Enterprise business intelligence, interactive data modeling, and visualization suite",
+      "defaultChecked": false,
+      "wingetId": "Microsoft.PowerBI"
+    },
+    {
+      "id": "jira",
+      "name": "Atlassian Jira CLI & Tools",
+      "category": "Project Management & Collaboration",
+      "tag": "Agile CLI",
+      "description": "Official Atlassian CLI (acli) for Jira issues, sprints, and VS Code Jira integration",
+      "defaultChecked": false,
+      "wingetId": "Atlassian.AtlassianCLI"
     },
     {
       "id": "baseWindows",
@@ -185,8 +212,11 @@
       "vscode",
       "notepadpp",
       "chrome",
+      "brave",
       "postman",
       "dbeaver",
+      "powerbi",
+      "jira",
       "baseWindows"
     ],
     "ai": [
@@ -266,6 +296,9 @@
     },
     "utilities": {
       "chrome": { "id": "Google.Chrome", "name": "Google Chrome" },
+      "brave": { "id": "Brave.Brave", "name": "Brave Browser" },
+      "powerbi": { "id": "Microsoft.PowerBI", "name": "Microsoft Power BI Desktop" },
+      "jira": { "id": "Atlassian.AtlassianCLI", "name": "Atlassian Jira CLI" },
       "postman": { "id": "Postman.Postman", "name": "Postman API Platform" },
       "dbeaver": { "id": "DBeaver.DBeaver", "name": "DBeaver Community Edition" }
     }
@@ -334,6 +367,9 @@
       "java": [
         "vscjava.vscode-java-pack",
         "vscjava.vscode-gradle"
+      ],
+      "jira": [
+        "Atlassian.atlascode"
       ]
     }
   }

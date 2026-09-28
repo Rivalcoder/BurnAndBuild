@@ -226,8 +226,8 @@ try {
         Write-Log -Level INFO -Message "Phase 6 (Docker Desktop) skipped per tool selection."
     }
 
-    # Phase 7: IDEs, Editors, Chrome, Postman, DBeaver
-    $ideIds = @("vscode", "notepadpp", "chrome", "postman", "dbeaver")
+    # Phase 7: IDEs, Editors, Browsers, API, BI & Project Tools
+    $ideIds = @("vscode", "notepadpp", "chrome", "brave", "postman", "dbeaver", "powerbi", "jira")
     $hasIde = $false
     foreach ($id in $ideIds) {
         if ($selectedTools -contains $id) { $hasIde = $true; break }

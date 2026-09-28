@@ -120,14 +120,16 @@ When launched, the tool prompts you with:
   - 💻 **Core CLI**: Git for Windows, GitHub CLI, 7-Zip, jq, ripgrep, fzf, PowerShell 7, Windows Terminal
   - 📝 **IDEs & Editors**: VS Code (+ dynamic extensions for your chosen runtimes), Notepad++
   - 🛠️ **API & Database**: Postman, DBeaver Community
-  - 🌐 **Browsers**: Google Chrome (for web & Flutter web debugging)
+  - 📊 **Data & Analytics**: Microsoft Power BI Desktop
+  - 📋 **Project Management**: Atlassian Jira CLI (`acli`) & Tools, VS Code Jira integration
+  - 🌐 **Browsers**: Google Chrome, Brave Browser
   - ⚙️ **Windows Optimizations**: NTFS Long Paths (>260 chars), Developer Mode, Never Sleep
 - **One-Click Quick Presets:**
   - `[ AI & Agents ]`: Antigravity CLI + Antigravity IDE + Cursor + Codex + Git + Node + Python + VS Code
   - `[ Mobile / Flutter ]`: Flutter + Android SDK + Java 17 + Git + VS Code + Chrome
   - `[ Full-Stack Web ]`: Node.js + Python + Docker + Git + VS Code + Chrome + Postman
   - `[ Docker & DevOps ]`: Docker + Python + Git + PowerShell 7 + VS Code
-  - `[ Select All ]`: Selects all tools
+  - `[ Select All ]`: Selects all 21 tools in catalog
   - `[ Clear All ]`: Unchecks all tools
 - **Start Installation**: Begins installing only the checked items!
 
