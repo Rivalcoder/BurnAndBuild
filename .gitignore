@@ -1,0 +1,18 @@
+# Logs
+*.log
+logs/
+
+# Secrets and keys
+id_ed25519*
+*.pem
+*.key
+.env*
+
+# Temporary files
+temp/
+*.tmp
+*.zip
+
+# VS Code local workspace settings
+.vscode/*
+!.vscode/settings.json

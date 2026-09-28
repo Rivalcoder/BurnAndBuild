@@ -1,0 +1,266 @@
+<#
+.SYNOPSIS
+    Universal Bootstrap Orchestrator for Disposable Windows Development VMs.
+
+.DESCRIPTION
+    Interactive & automated setup for Windows 10/11 and Windows Server.
+    Prompts the user to select which tools to install (Flutter, Node.js, Python,
+    Docker, Java JDK, Android SDK, VS Code, Git/CLI, Chrome, Postman, etc.),
+    and configures the selected tools, environment variables, PATH, and persistence.
+
+.PARAMETER Tools
+    Comma or space separated list of tools to install (e.g. -Tools "flutter, node, python, docker").
+    When specified, runs unattended without interactive prompting.
+
+.PARAMETER Preset
+    Preconfigured tool profile: "mobile" (Flutter/Android), "web" (Node/Python/Docker),
+    "devops" (Docker/Python), "minimal" (Git/VSCode), or "all".
+
+.PARAMETER Full
+    Installs all available tools in the catalog without prompting.
+
+.PARAMETER NoGui
+    Forces interactive console menu instead of modern WPF graphical checklist.
+
+.PARAMETER ForceCli
+    Alias for -NoGui.
+
+.PARAMETER BaseOnly
+    Runs only Base Windows configuration and core CLI tools.
+
+.PARAMETER GitName
+    Optional Git user name to configure.
+
+.PARAMETER GitEmail
+    Optional Git email to configure.
+
+.PARAMETER ConfigPath
+    Custom path to config.json. Defaults to config.json in script root.
+
+.EXAMPLE
+    # Default: Launches interactive GUI checklist to choose tools
+    .\bootstrap.ps1
+
+.EXAMPLE
+    # Unattended: Install specific tools
+    .\bootstrap.ps1 -Tools "flutter, node, python, docker"
+
+.EXAMPLE
+    # Unattended: Install Flutter mobile preset
+    .\bootstrap.ps1 -Preset "mobile"
+#>
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $false)]
+    [string[]]$Tools = @(),
+
+    [Parameter(Mandatory = $false)]
+    [string]$Preset = "",
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Full,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$NoGui,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$ForceCli,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$BaseOnly,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipAndroid,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipIDEs,
+
+    [Parameter(Mandatory = $false)]
+    [string]$GitName = "",
+
+    [Parameter(Mandatory = $false)]
+    [string]$GitEmail = "",
+
+    [Parameter(Mandatory = $false)]
+    [string]$ConfigPath = "$PSScriptRoot\config.json"
+)
+
+# 1. Administrator Elevation Check & Self-Elevation
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+$isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if (-not $isAdmin) {
+    Write-Warning "Administrator rights required. Relaunching in an elevated PowerShell session..."
+    $argList = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    if ($Tools.Count -gt 0) { $argList += " -Tools `"$($Tools -join ',')`"" }
+    if ($Preset) { $argList += " -Preset `"$Preset`"" }
+    if ($Full) { $argList += " -Full" }
+    if ($NoGui) { $argList += " -NoGui" }
+    if ($ForceCli) { $argList += " -ForceCli" }
+    if ($BaseOnly) { $argList += " -BaseOnly" }
+    if ($SkipAndroid) { $argList += " -SkipAndroid" }
+    if ($SkipIDEs) { $argList += " -SkipIDEs" }
+    if ($GitName) { $argList += " -GitName `"$GitName`"" }
+    if ($GitEmail) { $argList += " -GitEmail `"$GitEmail`"" }
+    if ($ConfigPath -ne "$PSScriptRoot\config.json") { $argList += " -ConfigPath `"$ConfigPath`"" }
+
+    Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $argList
+    exit
+}
+
+# 2. Import Core Modules
+$modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "modules"
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Force
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -Force
+Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -Force
+Import-Module (Join-Path -Path $modulesPath -ChildPath "ToolSelector.psm1") -Force
+
+# 3. Initialize Logger
+$logDir = "C:\Logs\VM-Setup"
+Initialize-Logger -LogDirectory $logDir -Prefix "bootstrap"
+
+Write-Host @"
+================================================================================
+          WINDOWS DISPOSABLE DEV ENVIRONMENT - MASTER BOOTSTRAP
+================================================================================
+  Target OS       : $([System.Environment]::OSVersion.VersionString)
+  Architecture    : $([System.Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE"))
+  PowerShell      : $($PSVersionTable.PSVersion.ToString())
+  Log Directory   : $logDir
+================================================================================
+"@ -ForegroundColor Cyan
+
+# 4. Resolve Tools to Install (Interactive or Parameterized)
+$selectedTools = @()
+
+if ($BaseOnly) {
+    $selectedTools = @("baseWindows", "gitCli")
+} else {
+    $selectorParams = @{
+        ConfigPath     = $ConfigPath
+        ExplicitTools  = $Tools
+        Preset         = $Preset
+        Full           = $Full
+        NoGui          = ($NoGui -or $ForceCli)
+    }
+
+    $selectedTools = Get-SelectedTools @selectorParams
+
+    # Legacy skip flags
+    if ($SkipAndroid -and ($selectedTools -contains "android")) {
+        $selectedTools = $selectedTools | Where-Object { $_ -ne "android" }
+    }
+    if ($SkipIDEs) {
+        $selectedTools = $selectedTools | Where-Object { $_ -ne "vscode" -and $_ -ne "notepadpp" }
+    }
+}
+
+if ($null -eq $selectedTools -or $selectedTools.Count -eq 0) {
+    Write-Log -Level WARN -Message "No tools selected for installation. Exiting."
+    exit 0
+}
+
+Write-Log -Level INFO -Message "Selected tools for installation: $($selectedTools -join ', ')"
+
+$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+# 5. Pipeline Execution Based on Selected Tools
+try {
+    # Phase 1: Base Windows OS Settings
+    if ($selectedTools -contains "baseWindows") {
+        $p1 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\01-Base-Windows.ps1"
+        & $p1 -ConfigPath $ConfigPath
+    } else {
+        Write-Log -Level INFO -Message "Phase 1 (Base Windows) skipped per tool selection."
+    }
+
+    # Phase 2: Core CLI Tools (Git, 7-Zip, jq, pwsh 7, gh)
+    if ($selectedTools -contains "gitCli") {
+        $p2 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\02-Common-CLI.ps1"
+        & $p2 -ConfigPath $ConfigPath
+    } else {
+        Write-Log -Level INFO -Message "Phase 2 (Core CLI) skipped per tool selection."
+    }
+
+    # Phase 3: Runtimes (Java, Node.js, Python, Gradle)
+    $runtimeIds = @("java", "node", "python", "gradle")
+    $hasRuntime = $false
+    foreach ($r in $runtimeIds) {
+        if ($selectedTools -contains $r) { $hasRuntime = $true; break }
+    }
+
+    if ($hasRuntime) {
+        $p3 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\03-Runtimes.ps1"
+        & $p3 -ConfigPath $ConfigPath -SelectedTools $selectedTools
+    } else {
+        Write-Log -Level INFO -Message "Phase 3 (Runtimes) skipped: none selected."
+    }
+
+    # Phase 4: Android SDK
+    if ($selectedTools -contains "android") {
+        $p4 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\04-Android-SDK.ps1"
+        & $p4 -ConfigPath $ConfigPath
+    } else {
+        Write-Log -Level INFO -Message "Phase 4 (Android SDK) skipped per tool selection."
+    }
+
+    # Phase 5: Flutter SDK
+    if ($selectedTools -contains "flutter") {
+        $p5 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\05-Flutter-SDK.ps1"
+        & $p5 -ConfigPath $ConfigPath
+    } else {
+        Write-Log -Level INFO -Message "Phase 5 (Flutter SDK) skipped per tool selection."
+    }
+
+    # Phase 6: Docker Desktop
+    if ($selectedTools -contains "docker") {
+        $p6 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\06-Docker.ps1"
+        & $p6 -ConfigPath $ConfigPath
+    } else {
+        Write-Log -Level INFO -Message "Phase 6 (Docker Desktop) skipped per tool selection."
+    }
+
+    # Phase 7: IDEs, Editors, Chrome, Postman, DBeaver
+    $ideIds = @("vscode", "notepadpp", "chrome", "postman", "dbeaver")
+    $hasIde = $false
+    foreach ($id in $ideIds) {
+        if ($selectedTools -contains $id) { $hasIde = $true; break }
+    }
+
+    if ($hasIde) {
+        $p7 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\07-IDEs-Editors.ps1"
+        & $p7 -ConfigPath $ConfigPath -SelectedTools $selectedTools
+    } else {
+        Write-Log -Level INFO -Message "Phase 7 (IDEs & Editors) skipped per tool selection."
+    }
+
+    # Phase 8: Shell Profile & Developer Aliases
+    $p8 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\08-Shell-Profile.ps1"
+    & $p8 -SelectedTools $selectedTools
+
+    # Phase 9: Persistence Setup & Caches
+    $p9 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\09-Persistence-Setup.ps1"
+    & $p9 -ConfigPath $ConfigPath -GitUserName $GitName -GitUserEmail $GitEmail -SelectedTools $selectedTools
+
+    # Final environment sync
+    Refresh-SessionEnvironment
+    $stopwatch.Stop()
+
+    Write-Host ""
+    Write-Host "================================================================================" -ForegroundColor Green
+    Write-Log -Level SUCCESS -Message "DISPOSABLE VM ENVIRONMENT SETUP COMPLETED IN $([math]::Round($stopwatch.Elapsed.TotalMinutes, 2)) MINUTES!"
+    Write-Host "================================================================================" -ForegroundColor Green
+    Write-Host ""
+
+    # Verification Smoke Test for Selected Tools
+    $testScript = Join-Path -Path $PSScriptRoot -ChildPath "tests\Verify-Installation.ps1"
+    if (Test-Path $testScript) {
+        & $testScript -SelectedTools $selectedTools
+    }
+
+} catch {
+    Write-Log -Level ERROR -Message "Bootstrap halted due to unhandled fatal error: $_"
+    Write-Log -Level ERROR -Message "StackTrace: $($_.ScriptStackTrace)"
+    exit 1
+}

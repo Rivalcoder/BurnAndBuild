@@ -1,0 +1,283 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "2.0.0",
+  "metadata": {
+    "name": "Windows Disposable Dev Environment Automation",
+    "description": "Enterprise-grade automation framework for setting up disposable Windows VMs for full-stack, mobile, and software development."
+  },
+  "settings": {
+    "workspaceRoot": "C:\\Workspace",
+    "toolsDirectory": "C:\\Tools",
+    "logDirectory": "C:\\Logs\\VM-Setup",
+    "enableLongPaths": true,
+    "enableDeveloperMode": true,
+    "preventSleep": true,
+    "showFileExtensions": true,
+    "showHiddenFiles": true
+  },
+  "selectableTools": [
+    {
+      "id": "flutter",
+      "name": "Flutter SDK",
+      "category": "Mobile Development",
+      "tag": "Framework",
+      "description": "Google Flutter SDK for cross-platform iOS, Android, Web & Desktop",
+      "defaultChecked": true,
+      "requires": ["gitCli"]
+    },
+    {
+      "id": "android",
+      "name": "Android SDK & Tools",
+      "category": "Mobile Development",
+      "tag": "Mobile SDK",
+      "description": "Android platform-tools (adb), cmdline-tools, build-tools 34, auto-accepted licenses",
+      "defaultChecked": true,
+      "requires": ["java"]
+    },
+    {
+      "id": "node",
+      "name": "Node.js LTS & npm",
+      "category": "Web & Backend Runtimes",
+      "tag": "Runtime",
+      "description": "Node.js LTS runtime with npm package manager via Fast Node Manager (fnm)",
+      "defaultChecked": true
+    },
+    {
+      "id": "python",
+      "name": "Python 3.12 & uv",
+      "category": "Web & Backend Runtimes",
+      "tag": "Runtime",
+      "description": "Python 3.12 interpreter, pip, and uv ultra-fast package manager",
+      "defaultChecked": true
+    },
+    {
+      "id": "docker",
+      "name": "Docker Desktop",
+      "category": "Containers & Cloud",
+      "tag": "Containers",
+      "description": "Docker engine, Docker Compose, container runtime & WSL2 integration",
+      "defaultChecked": true
+    },
+    {
+      "id": "java",
+      "name": "Java JDK 17 (Temurin)",
+      "category": "Languages & SDKs",
+      "tag": "JDK",
+      "description": "Eclipse Temurin OpenJDK 17 LTS, sets JAVA_HOME (Required for Android & Gradle)",
+      "defaultChecked": true
+    },
+    {
+      "id": "gradle",
+      "name": "Gradle Build Tool",
+      "category": "Languages & SDKs",
+      "tag": "Build Tool",
+      "description": "Gradle build automation tool for Java, Kotlin & Android projects",
+      "defaultChecked": true,
+      "requires": ["java"]
+    },
+    {
+      "id": "gitCli",
+      "name": "Git & Core CLI Suite",
+      "category": "Core CLI & Shell",
+      "tag": "CLI Tools",
+      "description": "Git, GitHub CLI, 7-Zip, jq, ripgrep, fzf, PowerShell 7, Windows Terminal",
+      "defaultChecked": true
+    },
+    {
+      "id": "vscode",
+      "name": "Visual Studio Code",
+      "category": "IDEs & Code Editors",
+      "tag": "IDE",
+      "description": "VS Code with automated extensions tailored for selected tools",
+      "defaultChecked": true
+    },
+    {
+      "id": "notepadpp",
+      "name": "Notepad++",
+      "category": "IDEs & Code Editors",
+      "tag": "Editor",
+      "description": "Fast, lightweight source code and text editor",
+      "defaultChecked": false
+    },
+    {
+      "id": "chrome",
+      "name": "Google Chrome",
+      "category": "Browsers & Utilities",
+      "tag": "Browser",
+      "description": "Google Chrome browser (essential for Flutter web development & debugging)",
+      "defaultChecked": true
+    },
+    {
+      "id": "postman",
+      "name": "Postman API Client",
+      "category": "API & Database Tools",
+      "tag": "API Tool",
+      "description": "Complete platform for API testing, mock servers, and collaboration",
+      "defaultChecked": false
+    },
+    {
+      "id": "dbeaver",
+      "name": "DBeaver Community",
+      "category": "API & Database Tools",
+      "tag": "Database",
+      "description": "Universal database manager for PostgreSQL, MySQL, SQLite, and more",
+      "defaultChecked": false
+    },
+    {
+      "id": "baseWindows",
+      "name": "Windows Dev Optimizations",
+      "category": "System Configuration",
+      "tag": "OS Tweaks",
+      "description": "Win32 Long Paths (>260 chars), Dev Mode, Never Sleep, File Explorer tweaks",
+      "defaultChecked": true
+    }
+  ],
+  "presets": {
+    "all": [
+      "flutter",
+      "android",
+      "node",
+      "python",
+      "docker",
+      "java",
+      "gradle",
+      "gitCli",
+      "vscode",
+      "notepadpp",
+      "chrome",
+      "postman",
+      "dbeaver",
+      "baseWindows"
+    ],
+    "mobile": [
+      "baseWindows",
+      "gitCli",
+      "java",
+      "android",
+      "gradle",
+      "flutter",
+      "vscode",
+      "chrome"
+    ],
+    "web": [
+      "baseWindows",
+      "gitCli",
+      "node",
+      "python",
+      "docker",
+      "vscode",
+      "chrome",
+      "postman"
+    ],
+    "devops": [
+      "baseWindows",
+      "gitCli",
+      "python",
+      "docker",
+      "vscode"
+    ],
+    "minimal": [
+      "baseWindows",
+      "gitCli",
+      "vscode"
+    ]
+  },
+  "wingetPackages": {
+    "coreCli": [
+      { "id": "Git.Git", "name": "Git for Windows" },
+      { "id": "7zip.7zip", "name": "7-Zip File Archiver" },
+      { "id": "jqlang.jq", "name": "jq JSON Processor" },
+      { "id": "BurntSushi.ripgrep.MSVC", "name": "ripgrep" },
+      { "id": "junegunn.fzf", "name": "fzf Command-line Fuzzy Finder" },
+      { "id": "Microsoft.PowerShell", "name": "PowerShell 7 (pwsh)" },
+      { "id": "Microsoft.WindowsTerminal", "name": "Windows Terminal" },
+      { "id": "GitHub.cli", "name": "GitHub CLI" }
+    ],
+    "runtimes": {
+      "java": { "id": "EclipseAdoptium.Temurin.17.JDK", "name": "Eclipse Temurin JDK 17 (LTS)" },
+      "node": { "id": "Schniz.fnm", "name": "Fast Node Manager (fnm)" },
+      "python": [
+        { "id": "astral-sh.uv", "name": "uv (Ultra-fast Python Package Manager)" },
+        { "id": "Python.Python.3.12", "name": "Python 3.12" }
+      ],
+      "gradle": { "id": "Gradle.Gradle", "name": "Gradle Build Tool" }
+    },
+    "docker": { "id": "Docker.DockerDesktop", "name": "Docker Desktop" },
+    "ides": {
+      "vscode": { "id": "Microsoft.VisualStudioCode", "name": "Visual Studio Code" },
+      "notepadpp": { "id": "Notepad++.Notepad++", "name": "Notepad++" }
+    },
+    "utilities": {
+      "chrome": { "id": "Google.Chrome", "name": "Google Chrome" },
+      "postman": { "id": "Postman.Postman", "name": "Postman API Platform" },
+      "dbeaver": { "id": "DBeaver.DBeaver", "name": "DBeaver Community Edition" }
+    }
+  },
+  "flutterSdk": {
+    "installDirectory": "C:\\Tools\\flutter",
+    "gitRepoUrl": "https://github.com/flutter/flutter.git",
+    "gitBranch": "stable",
+    "releasesJsonUrl": "https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json"
+  },
+  "androidSdk": {
+    "installDirectory": "C:\\Android\\android-sdk",
+    "cmdlineToolsZipUrl": "https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip",
+    "cmdlineToolsVersion": "11076708",
+    "packagesToInstall": [
+      "platform-tools",
+      "cmdline-tools;latest",
+      "build-tools;34.0.0",
+      "platforms;android-34",
+      "extras;google;m2repository"
+    ]
+  },
+  "environmentVariables": {
+    "machine": [
+      { "name": "JAVA_HOME", "value": "C:\\Program Files\\Eclipse Adoptium\\jdk-17" },
+      { "name": "ANDROID_HOME", "value": "C:\\Android\\android-sdk" },
+      { "name": "ANDROID_SDK_ROOT", "value": "C:\\Android\\android-sdk" },
+      { "name": "FLUTTER_HOME", "value": "C:\\Tools\\flutter" },
+      { "name": "GRADLE_HOME", "value": "C:\\Tools\\gradle" }
+    ],
+    "pathAdditions": [
+      "C:\\Tools\\flutter\\bin",
+      "C:\\Android\\android-sdk\\cmdline-tools\\latest\\bin",
+      "C:\\Android\\android-sdk\\platform-tools",
+      "C:\\Android\\android-sdk\\build-tools\\34.0.0",
+      "C:\\Tools\\gradle\\bin",
+      "C:\\Program Files\\Git\\cmd",
+      "C:\\Program Files\\PowerShell\\7",
+      "C:\\Program Files\\Docker\\Docker\\resources\\bin"
+    ]
+  },
+  "vscode": {
+    "coreExtensions": [
+      "eamodio.gitlens",
+      "ms-vscode.powershell",
+      "EditorConfig.EditorConfig",
+      "tamasfe.even-better-toml",
+      "redhat.vscode-yaml"
+    ],
+    "toolExtensions": {
+      "flutter": [
+        "Dart-Code.flutter",
+        "Dart-Code.dart-code"
+      ],
+      "python": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ],
+      "node": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "docker": [
+        "ms-azuretools.vscode-docker"
+      ],
+      "java": [
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-gradle"
+      ]
+    }
+  }
+}
