@@ -5,17 +5,32 @@
 [CmdletBinding()]
 param()
 
-Import-Module (Join-Path -Path $PSScriptRoot -ChildPath "Logging.psm1") -Force
+$modulesPath = $PSScriptRoot
+if (-not (Get-Command "Write-Log" -ErrorAction SilentlyContinue)) {
+    $logPath = Join-Path -Path $modulesPath -ChildPath "Logging.psm1"
+    if (Test-Path $logPath) {
+        Import-Module $logPath -Global -DisableNameChecking
+    }
+}
 
 function Get-ToolCatalog {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [string]$ConfigPath = "$PSScriptRoot\..\config.json"
+        [string]$ConfigPath = ""
     )
 
+    if (-not $ConfigPath) {
+        $parent = if ($PSScriptRoot) { Split-Path -Path $PSScriptRoot -Parent } else { (Get-Location).Path }
+        $ConfigPath = Join-Path -Path $parent -ChildPath "config.json"
+    }
+
     if (-not (Test-Path $ConfigPath)) {
-        throw "Configuration file not found at: $ConfigPath"
+        if (Test-Path "config.json") {
+            $ConfigPath = (Resolve-Path "config.json").Path
+        } else {
+            throw "Configuration file not found at: $ConfigPath"
+        }
     }
 
     $raw = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
@@ -39,14 +54,14 @@ function Show-ToolSelectionGui {
     $tools = $Config.selectableTools
     $presets = $Config.presets
 
-    # Generate XAML dynamically
-    $xaml = @"
+    # Clean, robust XAML without mojibake-prone multi-byte emojis
+    $xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Windows Dev VM Provisioner - Tool Selection"
-        Height="760" Width="820" MinHeight="620" MinWidth="720"
+        Height="820" Width="860" MinHeight="680" MinWidth="740"
         WindowStartupLocation="CenterScreen"
-        Background="#181825" Foreground="#CDD6F4"
+        Background="#0F172A" Foreground="#F8FAFC"
         FontFamily="Segoe UI, Segoe UI Variable, sans-serif">
     <Window.Resources>
         <Style TargetType="Button">
@@ -57,15 +72,15 @@ function Show-ToolSelectionGui {
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="13.5"/>
+            <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,2,0,2"/>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="20">
+    <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Header -->
             <RowDefinition Height="Auto"/> <!-- Presets -->
@@ -74,44 +89,45 @@ function Show-ToolSelectionGui {
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#1E1E2E" CornerRadius="10" Padding="18,14" Margin="0,0,0,12" BorderBrush="#313244" BorderThickness="1">
+        <Border Grid.Row="0" Background="#1E293B" CornerRadius="8" Padding="16,12" Margin="0,0,0,12" BorderBrush="#334155" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="🚀 Windows Dev Environment Provisioner" FontSize="20" FontWeight="Bold" Foreground="#89B4FA"/>
-                    <TextBlock Text="Select the developer tools, runtimes, and frameworks you want to install on this VM:"
-                               FontSize="13" Foreground="#BAC2DE" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                    <TextBlock Text="Windows Dev Environment Provisioner" FontSize="19" FontWeight="Bold" Foreground="#38BDF8"/>
+                    <TextBlock Text="Select developer tools, runtimes, and frameworks to install on this VM:"
+                               FontSize="12.5" Foreground="#CBD5E1" Margin="0,3,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
-                <Border Grid.Column="1" Background="#313244" CornerRadius="6" Padding="10,6" VerticalAlignment="Center">
-                    <TextBlock Name="TxtSummaryCount" Text="Selected: 0 tools" FontSize="12" FontWeight="Bold" Foreground="#A6E3A1"/>
+                <Border Grid.Column="1" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="12,6" VerticalAlignment="Center">
+                    <TextBlock Name="TxtSummaryCount" Text="Selected: 0 tools" FontSize="12.5" FontWeight="Bold" Foreground="#4ADE80"/>
                 </Border>
             </Grid>
         </Border>
 
         <!-- Presets Bar -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-            <TextBlock Text="Quick Presets:" VerticalAlignment="Center" Foreground="#A6ADC8" FontWeight="SemiBold" FontSize="12" Margin="0,0,10,0"/>
-            <Button Name="BtnPresetMobile" Content="📱 Flutter &amp; Mobile" Background="#2A2B3D" Foreground="#F9E2AF" BorderBrush="#F9E2AF" Margin="0,0,8,0"/>
-            <Button Name="BtnPresetWeb" Content="🌐 Full-Stack Web" Background="#2A2B3D" Foreground="#89B4FA" BorderBrush="#89B4FA" Margin="0,0,8,0"/>
-            <Button Name="BtnPresetDevops" Content="🐳 Docker &amp; DevOps" Background="#2A2B3D" Foreground="#94E2D5" BorderBrush="#94E2D5" Margin="0,0,8,0"/>
-            <Button Name="BtnSelectAll" Content="✨ Select All" Background="#313244" Foreground="#CDD6F4" BorderBrush="#45475A" Margin="0,0,8,0"/>
-            <Button Name="BtnClearAll" Content="🧹 Clear All" Background="#313244" Foreground="#BAC2DE" BorderBrush="#45475A"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Presets:" VerticalAlignment="Center" Foreground="#94A3B8" FontWeight="Bold" FontSize="12" Margin="0,0,8,0"/>
+            <Button Name="BtnPresetAi" Content="AI &amp; Agents" Background="#1E293B" Foreground="#C084FC" BorderBrush="#A855F7" Margin="0,0,6,0"/>
+            <Button Name="BtnPresetMobile" Content="Mobile / Flutter" Background="#1E293B" Foreground="#FBBF24" BorderBrush="#F59E0B" Margin="0,0,6,0"/>
+            <Button Name="BtnPresetWeb" Content="Full-Stack Web" Background="#1E293B" Foreground="#60A5FA" BorderBrush="#3B82F6" Margin="0,0,6,0"/>
+            <Button Name="BtnPresetDevops" Content="Docker &amp; DevOps" Background="#1E293B" Foreground="#2DD4BF" BorderBrush="#0D9488" Margin="0,0,6,0"/>
+            <Button Name="BtnSelectAll" Content="Select All" Background="#1E293B" Foreground="#4ADE80" BorderBrush="#22C55E" Margin="0,0,6,0"/>
+            <Button Name="BtnClearAll" Content="Clear All" Background="#1E293B" Foreground="#94A3B8" BorderBrush="#64748B"/>
         </StackPanel>
 
         <!-- Checklist Scroll Area -->
-        <Border Grid.Row="2" Background="#1E1E2E" CornerRadius="10" BorderBrush="#313244" BorderThickness="1" Padding="12">
+        <Border Grid.Row="2" Background="#0F172A" CornerRadius="8" BorderBrush="#334155" BorderThickness="1" Padding="10">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Name="PnlCategories" Margin="0,0,8,0">
+                <StackPanel Name="PnlCategories" Margin="0,0,6,0">
                     <!-- Tool Cards populated dynamically in code -->
                 </StackPanel>
             </ScrollViewer>
         </Border>
 
         <!-- Footer / Start Button -->
-        <Border Grid.Row="3" Background="#1E1E2E" CornerRadius="10" Padding="16,12" Margin="0,12,0,0" BorderBrush="#313244" BorderThickness="1">
+        <Border Grid.Row="3" Background="#1E293B" CornerRadius="8" Padding="14,10" Margin="0,10,0,0" BorderBrush="#334155" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -120,24 +136,25 @@ function Show-ToolSelectionGui {
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="Idempotent: Already installed tools will be verified and skipped safely." FontSize="11" Foreground="#6C7086"/>
+                    <TextBlock Text="Idempotent: Already installed tools will be verified and safely preserved." FontSize="11" Foreground="#94A3B8"/>
                 </StackPanel>
 
-                <Button Name="BtnCancel" Grid.Column="1" Content="✕ Cancel" Background="#313244" Foreground="#F38BA8"
-                        BorderBrush="#F38BA8" Margin="0,0,10,0" Width="100"/>
-                <Button Name="BtnStart" Grid.Column="2" Content="▶  Start Installation" Background="#A6E3A1" Foreground="#11111B"
-                        BorderBrush="#A6E3A1" FontWeight="Bold" FontSize="13" Padding="20,8"/>
+                <Button Name="BtnCancel" Grid.Column="1" Content="Cancel" Background="#1E293B" Foreground="#F87171"
+                        BorderBrush="#EF4444" Margin="0,0,8,0" Width="90"/>
+                <Button Name="BtnStart" Grid.Column="2" Content="Start Installation" Background="#22C55E" Foreground="#022C22"
+                        BorderBrush="#16A34A" FontWeight="Bold" FontSize="13.5" Padding="20,7"/>
             </Grid>
         </Border>
     </Grid>
 </Window>
-"@
+'@
 
     $reader = [System.Xml.XmlReader]::Create([System.IO.StringReader]::new($xaml))
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
 
     $pnlCategories = $window.FindName("PnlCategories")
     $txtSummaryCount = $window.FindName("TxtSummaryCount")
+    $btnPresetAi = $window.FindName("BtnPresetAi")
     $btnPresetMobile = $window.FindName("BtnPresetMobile")
     $btnPresetWeb = $window.FindName("BtnPresetWeb")
     $btnPresetDevops = $window.FindName("BtnPresetDevops")
@@ -146,25 +163,24 @@ function Show-ToolSelectionGui {
     $btnStart = $window.FindName("BtnStart")
     $btnCancel = $window.FindName("BtnCancel")
 
-    # Store mapping of toolId -> CheckBox control
     $checkBoxMap = @{}
-
-    # Group tools by category
     $categories = $tools | Group-Object -Property category
 
     foreach ($cat in $categories) {
-        # Category Header
+        # Category Banner
         $catHeader = New-Object System.Windows.Controls.Border
-        $catHeader.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#252538")
-        $catHeader.CornerRadius = New-Object System.Windows.CornerRadius(6)
-        $catHeader.Padding = New-Object System.Windows.Thickness(10, 6, 10, 6)
-        $catHeader.Margin = New-Object System.Windows.Thickness(0, 10, 0, 8)
+        $catHeader.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1E293B")
+        $catHeader.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
+        $catHeader.BorderThickness = New-Object System.Windows.Thickness(2, 0, 0, 0)
+        $catHeader.CornerRadius = New-Object System.Windows.CornerRadius(4)
+        $catHeader.Padding = New-Object System.Windows.Thickness(10, 5, 10, 5)
+        $catHeader.Margin = New-Object System.Windows.Thickness(0, 10, 0, 6)
 
         $catText = New-Object System.Windows.Controls.TextBlock
         $catText.Text = $cat.Name
         $catText.FontSize = 13
         $catText.FontWeight = [System.Windows.FontWeights]::Bold
-        $catText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#CBA6F7")
+        $catText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
         $catHeader.Child = $catText
 
         $pnlCategories.Children.Add($catHeader) | Out-Null
@@ -172,12 +188,12 @@ function Show-ToolSelectionGui {
         foreach ($tool in $cat.Group) {
             # Tool Card
             $card = New-Object System.Windows.Controls.Border
-            $card.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#181825")
-            $card.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#313244")
+            $card.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#1E293B")
+            $card.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#334155")
             $card.BorderThickness = New-Object System.Windows.Thickness(1)
             $card.CornerRadius = New-Object System.Windows.CornerRadius(6)
             $card.Padding = New-Object System.Windows.Thickness(12, 8, 12, 8)
-            $card.Margin = New-Object System.Windows.Thickness(0, 0, 0, 6)
+            $card.Margin = New-Object System.Windows.Thickness(0, 0, 0, 5)
 
             $cardGrid = New-Object System.Windows.Controls.Grid
             $col0 = New-Object System.Windows.Controls.ColumnDefinition
@@ -194,20 +210,25 @@ function Show-ToolSelectionGui {
             $cb.Content = $tool.name
             $cb.IsChecked = [bool]$tool.defaultChecked
             $cb.Tag = $tool.id
+            $cb.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FFFFFF")
+            $cb.FontWeight = [System.Windows.FontWeights]::Bold
+            $cb.FontSize = 13.5
 
             $desc = New-Object System.Windows.Controls.TextBlock
             $desc.Text = $tool.description
-            $desc.FontSize = 11
-            $desc.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#A6ADC8")
+            $desc.FontSize = 11.5
+            $desc.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#E2E8F0")
             $desc.Margin = New-Object System.Windows.Thickness(24, 2, 0, 0)
             $desc.TextWrapping = [System.Windows.TextWrapping]::Wrap
 
             $toolStack.Children.Add($cb) | Out-Null
             $toolStack.Children.Add($desc) | Out-Null
 
-            # Tag badge
+            # Tag Badge
             $badgeBorder = New-Object System.Windows.Controls.Border
-            $badgeBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#2E2E3E")
+            $badgeBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0F172A")
+            $badgeBorder.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0284C7")
+            $badgeBorder.BorderThickness = New-Object System.Windows.Thickness(1)
             $badgeBorder.CornerRadius = New-Object System.Windows.CornerRadius(4)
             $badgeBorder.Padding = New-Object System.Windows.Thickness(8, 3, 8, 3)
             $badgeBorder.VerticalAlignment = [System.Windows.VerticalAlignment]::Center
@@ -215,9 +236,9 @@ function Show-ToolSelectionGui {
 
             $badgeText = New-Object System.Windows.Controls.TextBlock
             $badgeText.Text = if ($tool.tag) { $tool.tag } else { "Tool" }
-            $badgeText.FontSize = 10
+            $badgeText.FontSize = 10.5
             $badgeText.FontWeight = [System.Windows.FontWeights]::SemiBold
-            $badgeText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#89DCEB")
+            $badgeText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
             $badgeBorder.Child = $badgeText
 
             $cardGrid.Children.Add($toolStack) | Out-Null
@@ -243,19 +264,16 @@ function Show-ToolSelectionGui {
 
     # Dependency auto-check handler
     $handleDependency = {
-        # If Flutter checked -> check gitCli
         if ($checkBoxMap.ContainsKey("flutter") -and $checkBoxMap["flutter"].IsChecked -eq $true) {
             if ($checkBoxMap.ContainsKey("gitCli") -and $checkBoxMap["gitCli"].IsChecked -ne $true) {
                 $checkBoxMap["gitCli"].IsChecked = $true
             }
         }
-        # If Android checked -> check Java
         if ($checkBoxMap.ContainsKey("android") -and $checkBoxMap["android"].IsChecked -eq $true) {
             if ($checkBoxMap.ContainsKey("java") -and $checkBoxMap["java"].IsChecked -ne $true) {
                 $checkBoxMap["java"].IsChecked = $true
             }
         }
-        # If Gradle checked -> check Java
         if ($checkBoxMap.ContainsKey("gradle") -and $checkBoxMap["gradle"].IsChecked -eq $true) {
             if ($checkBoxMap.ContainsKey("java") -and $checkBoxMap["java"].IsChecked -ne $true) {
                 $checkBoxMap["java"].IsChecked = $true
@@ -264,13 +282,11 @@ function Show-ToolSelectionGui {
         & $updateCount
     }
 
-    # Attach event listeners to checkboxes
     foreach ($k in $checkBoxMap.Keys) {
         $checkBoxMap[$k].Add_Checked({ & $handleDependency })
         $checkBoxMap[$k].Add_Unchecked({ & $updateCount })
     }
 
-    # Initial count update
     & $updateCount
 
     # Preset handlers
@@ -280,6 +296,12 @@ function Show-ToolSelectionGui {
             $checkBoxMap[$k].IsChecked = ($toolIds -contains $k)
         }
         & $updateCount
+    }
+
+    if ($btnPresetAi) {
+        $btnPresetAi.Add_Click({
+            & $applyPreset $presets.ai
+        })
     }
 
     $btnPresetMobile.Add_Click({
@@ -353,7 +375,6 @@ function Show-ToolSelectionCli {
     $tools = $Config.selectableTools
     $presets = $Config.presets
 
-    # Initialize selection state map
     $selectedMap = [ordered]@{}
     for ($i = 0; $i -lt $tools.Count; $i++) {
         $t = $tools[$i]
@@ -385,17 +406,16 @@ function Show-ToolSelectionCli {
         $selectedCount = ($selectedMap.Values | Where-Object { $_ -eq $true }).Count
         Write-Host "`n--------------------------------------------------------------------------------" -ForegroundColor Cyan
         Write-Host " Selected: $selectedCount of $($tools.Count) tools" -ForegroundColor Yellow
-        Write-Host " Presets : [M] Mobile/Flutter  [W] Full-Stack Web  [D] DevOps  [A] All  [C] Clear" -ForegroundColor DarkYellow
+        Write-Host " Presets : [AI] AI & Agents  [M] Mobile  [W] Web  [D] DevOps  [A] All  [C] Clear" -ForegroundColor DarkYellow
         Write-Host " Actions : [Enter] START INSTALLATION   [Q] Quit / Cancel" -ForegroundColor Green
         Write-Host "--------------------------------------------------------------------------------" -ForegroundColor Cyan
-        Write-Host -NoNewline "Command / Numbers to toggle (e.g. '1,4,7' or 'M'): "
+        Write-Host -NoNewline "Command / Numbers to toggle (e.g. '1,4,7' or 'AI'): "
 
         $input = Read-Host
         if ($null -eq $input) { $input = "" }
         $input = $input.Trim()
 
         if ($input -eq "" -or $input.ToLower() -eq "start") {
-            # Start if at least one selected
             $chosen = @()
             foreach ($k in $selectedMap.Keys) {
                 if ($selectedMap[$k]) { $chosen += $k }
@@ -423,6 +443,13 @@ function Show-ToolSelectionCli {
             continue
         }
 
+        if ($input.ToLower() -eq "ai") {
+            foreach ($k in $selectedMap.Keys) {
+                $selectedMap[$k] = ($presets.ai -contains $k)
+            }
+            continue
+        }
+
         if ($input.ToLower() -eq "m" -or $input.ToLower() -eq "mobile") {
             foreach ($k in $selectedMap.Keys) {
                 $selectedMap[$k] = ($presets.mobile -contains $k)
@@ -444,7 +471,6 @@ function Show-ToolSelectionCli {
             continue
         }
 
-        # Handle comma or space separated numbers
         $tokens = $input -split '[\s,]+'
         foreach ($tok in $tokens) {
             $numVal = 0
@@ -454,7 +480,6 @@ function Show-ToolSelectionCli {
                     $toolId = $tools[$idx].id
                     $selectedMap[$toolId] = -not $selectedMap[$toolId]
 
-                    # Auto-check dependencies
                     if ($toolId -eq "flutter" -and $selectedMap["flutter"]) {
                         $selectedMap["gitCli"] = $true
                     }
@@ -516,35 +541,40 @@ function Get-SelectedTools {
     if ($ExplicitTools -and $ExplicitTools.Count -gt 0) {
         $resolved = @()
         $aliasMap = @{
-            "dart"       = "flutter"
-            "flutter"    = "flutter"
-            "node"       = "node"
-            "nodejs"     = "node"
-            "python"     = "python"
-            "pythin"     = "python"
-            "py"         = "python"
-            "docker"     = "docker"
-            "containers" = "docker"
-            "java"       = "java"
-            "jdk"        = "java"
-            "android"    = "android"
-            "gradle"     = "gradle"
-            "git"        = "gitCli"
-            "cli"        = "gitCli"
-            "gitcli"     = "gitCli"
-            "vscode"     = "vscode"
-            "code"       = "vscode"
-            "notepad"    = "notepadpp"
-            "notepadpp"  = "notepadpp"
-            "chrome"     = "chrome"
-            "postman"    = "postman"
-            "dbeaver"    = "dbeaver"
-            "base"       = "baseWindows"
-            "windows"    = "baseWindows"
-            "basewindows"= "baseWindows"
+            "antigravity"   = "antigravityCli"
+            "antigravitycli"= "antigravityCli"
+            "agy"           = "antigravityCli"
+            "antigravityide"= "antigravityIde"
+            "cursor"        = "cursor"
+            "codex"         = "codex"
+            "dart"          = "flutter"
+            "flutter"       = "flutter"
+            "node"          = "node"
+            "nodejs"        = "node"
+            "python"        = "python"
+            "pythin"        = "python"
+            "py"            = "python"
+            "docker"        = "docker"
+            "containers"    = "docker"
+            "java"          = "java"
+            "jdk"           = "java"
+            "android"       = "android"
+            "gradle"        = "gradle"
+            "git"           = "gitCli"
+            "cli"           = "gitCli"
+            "gitcli"        = "gitCli"
+            "vscode"        = "vscode"
+            "code"          = "vscode"
+            "notepad"       = "notepadpp"
+            "notepadpp"     = "notepadpp"
+            "chrome"        = "chrome"
+            "postman"       = "postman"
+            "dbeaver"       = "dbeaver"
+            "base"          = "baseWindows"
+            "windows"       = "baseWindows"
+            "basewindows"   = "baseWindows"
         }
 
-        # Flatten any comma-separated strings inside array
         $flatList = foreach ($item in $ExplicitTools) {
             $item -split '[\s,]+' | Where-Object { $_ -ne "" }
         }
@@ -564,7 +594,6 @@ function Get-SelectedTools {
         }
 
         if ($resolved.Count -gt 0) {
-            # Auto-resolve critical dependencies
             if ($resolved -contains "flutter" -and $resolved -notcontains "gitCli") {
                 Write-Log -Level INFO -Message "Flutter requires Git. Automatically adding 'gitCli'."
                 $resolved += "gitCli"
@@ -585,7 +614,6 @@ function Get-SelectedTools {
         try {
             $guiSelection = Show-ToolSelectionGui -Config $config
             if ($null -ne $guiSelection) {
-                # Ensure critical dependencies
                 if ($guiSelection -contains "flutter" -and $guiSelection -notcontains "gitCli") {
                     $guiSelection += "gitCli"
                 }

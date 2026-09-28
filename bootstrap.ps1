@@ -4,23 +4,23 @@
 
 .DESCRIPTION
     Interactive & automated setup for Windows 10/11 and Windows Server.
-    Prompts the user to select which tools to install (Flutter, Node.js, Python,
-    Docker, Java JDK, Android SDK, VS Code, Git/CLI, Chrome, Postman, etc.),
+    Prompts the user to select which tools to install (Antigravity CLI/IDE, Cursor,
+    Codex, Flutter, Node.js, Python, Docker, Java JDK, Android SDK, VS Code, Git, etc.),
     and configures the selected tools, environment variables, PATH, and persistence.
 
 .PARAMETER Tools
-    Comma or space separated list of tools to install (e.g. -Tools "flutter, node, python, docker").
+    Comma or space separated list of tools to install (e.g. -Tools "antigravity, cursor, codex, flutter, node, docker").
     When specified, runs unattended without interactive prompting.
 
 .PARAMETER Preset
-    Preconfigured tool profile: "mobile" (Flutter/Android), "web" (Node/Python/Docker),
-    "devops" (Docker/Python), "minimal" (Git/VSCode), or "all".
+    Preconfigured tool profile: "ai" (Antigravity/Cursor/Codex), "mobile" (Flutter/Android),
+    "web" (Node/Python/Docker), "devops" (Docker/Python), "minimal" (Git/VSCode), or "all".
 
 .PARAMETER Full
     Installs all available tools in the catalog without prompting.
 
 .PARAMETER NoGui
-    Forces interactive console menu instead of modern WPF graphical checklist.
+    Forces interactive console menu instead of modern graphical checklist.
 
 .PARAMETER ForceCli
     Alias for -NoGui.
@@ -43,11 +43,11 @@
 
 .EXAMPLE
     # Unattended: Install specific tools
-    .\bootstrap.ps1 -Tools "flutter, node, python, docker"
+    .\bootstrap.ps1 -Tools "antigravity, cursor, codex, flutter, node, python, docker"
 
 .EXAMPLE
-    # Unattended: Install Flutter mobile preset
-    .\bootstrap.ps1 -Preset "mobile"
+    # Unattended: Install AI & Agents preset
+    .\bootstrap.ps1 -Preset "ai"
 #>
 
 [CmdletBinding()]
@@ -83,8 +83,13 @@ param(
     [string]$GitEmail = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$ConfigPath = "$PSScriptRoot\config.json"
+    [string]$ConfigPath = ""
 )
+
+# Resolve Script Directory and ConfigPath robustly
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
+if (-not $ConfigPath) { $ConfigPath = Join-Path -Path $scriptDir -ChildPath "config.json" }
 
 # 1. Administrator Elevation Check & Self-Elevation
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -111,10 +116,10 @@ if (-not $isAdmin) {
 
 # 2. Import Core Modules
 $modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "modules"
-Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Force
-Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -Force
-Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -Force
-Import-Module (Join-Path -Path $modulesPath -ChildPath "ToolSelector.psm1") -Force
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -DisableNameChecking
+Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -DisableNameChecking
+Import-Module (Join-Path -Path $modulesPath -ChildPath "ToolSelector.psm1") -DisableNameChecking
 
 # 3. Initialize Logger
 $logDir = "C:\Logs\VM-Setup"
@@ -235,13 +240,27 @@ try {
         Write-Log -Level INFO -Message "Phase 7 (IDEs & Editors) skipped per tool selection."
     }
 
-    # Phase 8: Shell Profile & Developer Aliases
-    $p8 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\08-Shell-Profile.ps1"
-    & $p8 -SelectedTools $selectedTools
+    # Phase 8: AI & Autonomous Agent Tools (Antigravity CLI/IDE, Cursor, Codex)
+    $aiIds = @("antigravityCli", "antigravityIde", "cursor", "codex")
+    $hasAi = $false
+    foreach ($id in $aiIds) {
+        if ($selectedTools -contains $id) { $hasAi = $true; break }
+    }
 
-    # Phase 9: Persistence Setup & Caches
-    $p9 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\09-Persistence-Setup.ps1"
-    & $p9 -ConfigPath $ConfigPath -GitUserName $GitName -GitUserEmail $GitEmail -SelectedTools $selectedTools
+    if ($hasAi) {
+        $p8 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\08-AI-Tools.ps1"
+        & $p8 -ConfigPath $ConfigPath -SelectedTools $selectedTools
+    } else {
+        Write-Log -Level INFO -Message "Phase 8 (AI Tools) skipped per tool selection."
+    }
+
+    # Phase 9: Shell Profile & Developer Aliases
+    $p9 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\08-Shell-Profile.ps1"
+    & $p9 -SelectedTools $selectedTools
+
+    # Phase 10: Persistence Setup & Caches
+    $p10 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\09-Persistence-Setup.ps1"
+    & $p10 -ConfigPath $ConfigPath -GitUserName $GitName -GitUserEmail $GitEmail -SelectedTools $selectedTools
 
     # Final environment sync
     Refresh-SessionEnvironment

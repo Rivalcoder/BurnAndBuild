@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "metadata": {
     "name": "Windows Disposable Dev Environment Automation",
-    "description": "Enterprise-grade automation framework for setting up disposable Windows VMs for full-stack, mobile, and software development."
+    "description": "Enterprise-grade automation framework for setting up disposable Windows VMs for software, web, mobile, and AI development."
   },
   "settings": {
     "workspaceRoot": "C:\\Workspace",
@@ -17,11 +17,47 @@
   },
   "selectableTools": [
     {
+      "id": "antigravityCli",
+      "name": "Antigravity CLI (agy)",
+      "category": "AI & Autonomous Agents",
+      "tag": "AI CLI",
+      "description": "Google Antigravity TUI terminal assistant with multi-step reasoning, slash commands & subagents",
+      "defaultChecked": true,
+      "wingetId": "Google.AntigravityCLI"
+    },
+    {
+      "id": "antigravityIde",
+      "name": "Antigravity IDE",
+      "category": "AI & Autonomous Agents",
+      "tag": "AI IDE",
+      "description": "Google AI-first standalone development environment with agent workspace and auxiliary panes",
+      "defaultChecked": true,
+      "wingetId": "Google.AntigravityIDE"
+    },
+    {
+      "id": "cursor",
+      "name": "Cursor AI Editor",
+      "category": "AI & Autonomous Agents",
+      "tag": "AI IDE",
+      "description": "Anysphere Cursor AI-powered code editor with inline code generation and chat lenses",
+      "defaultChecked": true,
+      "wingetId": "Anysphere.Cursor"
+    },
+    {
+      "id": "codex",
+      "name": "OpenAI Codex CLI",
+      "category": "AI & Autonomous Agents",
+      "tag": "AI CLI",
+      "description": "OpenAI Codex command-line interface for autonomous coding, code reviews, and reasoning",
+      "defaultChecked": true,
+      "wingetId": "OpenAI.Codex"
+    },
+    {
       "id": "flutter",
       "name": "Flutter SDK",
       "category": "Mobile Development",
       "tag": "Framework",
-      "description": "Google Flutter SDK for cross-platform iOS, Android, Web & Desktop",
+      "description": "Google Flutter SDK for cross-platform iOS, Android, Web & Desktop development",
       "defaultChecked": true,
       "requires": ["gitCli"]
     },
@@ -134,6 +170,10 @@
   ],
   "presets": {
     "all": [
+      "antigravityCli",
+      "antigravityIde",
+      "cursor",
+      "codex",
       "flutter",
       "android",
       "node",
@@ -148,6 +188,17 @@
       "postman",
       "dbeaver",
       "baseWindows"
+    ],
+    "ai": [
+      "baseWindows",
+      "gitCli",
+      "node",
+      "python",
+      "antigravityCli",
+      "antigravityIde",
+      "cursor",
+      "codex",
+      "vscode"
     ],
     "mobile": [
       "baseWindows",
@@ -183,6 +234,12 @@
     ]
   },
   "wingetPackages": {
+    "aiTools": {
+      "antigravityCli": { "id": "Google.AntigravityCLI", "name": "Antigravity CLI" },
+      "antigravityIde": { "id": "Google.AntigravityIDE", "name": "Antigravity IDE" },
+      "cursor": { "id": "Anysphere.Cursor", "name": "Cursor AI Editor" },
+      "codex": { "id": "OpenAI.Codex", "name": "OpenAI Codex CLI" }
+    },
     "coreCli": [
       { "id": "Git.Git", "name": "Git for Windows" },
       { "id": "7zip.7zip", "name": "7-Zip File Archiver" },

@@ -7,25 +7,25 @@ param(
     [string[]]$SelectedTools = @()
 )
 
-$modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "..\modules"
-Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Force
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
+$rootDir = Split-Path -Path $scriptDir -Parent
+$modulesPath = Join-Path -Path $rootDir -ChildPath "modules"
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
 
-Write-LogHeader "Phase 8: PowerShell Environment and Shell Customization"
+Write-LogHeader "Phase 9: PowerShell Environment and Shell Customization"
 
-# 1. Install Helpful PowerShell Modules (posh-git, PSReadLine)
-Write-Log -Level INFO -Message "Verifying PowerShell Gallery modules (posh-git, PSReadLine)..."
+# 1. Check PowerShell Modules (posh-git, PSReadLine)
+Write-Log -Level INFO -Message "Checking PowerShell environment and modules..."
 try {
-    # Ensure NuGet provider is ready
-    if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
-        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Confirm:$false | Out-Null
-    }
-
-    if (-not (Get-Module -ListAvailable -Name posh-git)) {
-        Write-Log -Level INFO -Message "Installing module 'posh-git'..."
-        Install-Module -Name posh-git -Scope CurrentUser -Force -SkipPublisherCheck -Confirm:$false
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    if (Get-Module -ListAvailable -Name posh-git) {
+        Write-Log -Level SUCCESS -Message "posh-git is available."
+    } else {
+        Write-Log -Level INFO -Message "posh-git is not installed (shell profile handles this conditionally)."
     }
 } catch {
-    Write-Log -Level WARN -Message "Module installation from PSGallery had a warning: $_"
+    Write-Log -Level DEBUG -Message "Module check notice: $_"
 }
 
 # 2. Deploy Standard Profile
@@ -38,11 +38,16 @@ $profileTemplate = @'
 
 # PSReadLine Enhanced Prediction & History
 if (Get-Module -ListAvailable -Name PSReadLine) {
-    Import-Module PSReadLine
-    Set-PSReadLineOption -PredictionSource HistoryAndPlugin
-    Set-PSReadLineOption -PredictionViewStyle ListView
-    Set-PSReadLineOption -EditMode Windows
-    Set-PSReadLineKeyHandler -Key Tab -Function Complete
+    try {
+        Import-Module PSReadLine -ErrorAction SilentlyContinue
+        $psr = Get-Module PSReadLine
+        if ($psr -and $psr.Version -ge [Version]"2.2.0") {
+            Set-PSReadLineOption -PredictionSource HistoryAndPlugin -ErrorAction SilentlyContinue
+            Set-PSReadLineOption -PredictionViewStyle ListView -ErrorAction SilentlyContinue
+        }
+        Set-PSReadLineOption -EditMode Windows -ErrorAction SilentlyContinue
+        Set-PSReadLineKeyHandler -Key Tab -Function Complete -ErrorAction SilentlyContinue
+    } catch {}
 }
 
 # Load posh-git for Git status in prompt
@@ -76,24 +81,23 @@ function reload-env {
     $env:Path = (@($m -split ';', $u -split ';') | Where-Object { $_ -ne '' } | Select-Object -Unique) -join ';'
     Write-Host "Environment refreshed!" -ForegroundColor Green
 }
-
-Write-Host "Disposable Windows Dev VM Ready." -ForegroundColor Green
 '@
 
-$targetProfiles = @(
-    $PROFILE.CurrentUserAllHosts,
-    $PROFILE.CurrentUserCurrentHost
-)
-
-foreach ($prof in $targetProfiles) {
-    if (-not $prof) { continue }
-    $dir = Split-Path -Path $prof -Parent
+$allHostsProf = $PROFILE.CurrentUserAllHosts
+if ($allHostsProf) {
+    $dir = Split-Path -Path $allHostsProf -Parent
     if (-not (Test-Path $dir)) {
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
     }
+    Set-Content -Path $allHostsProf -Value $profileTemplate -Encoding UTF8 -Force
+    Write-Log -Level SUCCESS -Message "Deployed profile configuration to: $allHostsProf"
+}
 
-    Set-Content -Path $prof -Value $profileTemplate -Encoding UTF8 -Force
-    Write-Log -Level SUCCESS -Message "Deployed profile configuration to: $prof"
+# Clean CurrentUserCurrentHost if it exists and differs from AllHosts to prevent duplicate banner/execution
+$currHostProf = $PROFILE.CurrentUserCurrentHost
+if ($currHostProf -and ($currHostProf -ne $allHostsProf) -and (Test-Path $currHostProf)) {
+    Set-Content -Path $currHostProf -Value "# Host-specific profile - general developer profile loaded from profile.ps1" -Encoding UTF8 -Force
+    Write-Log -Level SUCCESS -Message "Cleaned redundant host-specific profile at: $currHostProf"
 }
 
 Write-Log -Level SUCCESS -Message "PowerShell developer profile configured."

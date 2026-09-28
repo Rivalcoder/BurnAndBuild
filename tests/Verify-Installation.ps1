@@ -19,8 +19,8 @@ $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyI
 if (-not $scriptDir) { $scriptDir = Join-Path (Get-Location).Path "tests" }
 $rootDir = Split-Path -Path $scriptDir -Parent
 $modulesPath = Join-Path -Path $rootDir -ChildPath "modules"
-Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Force
-Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -Force
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -DisableNameChecking
 
 Refresh-SessionEnvironment
 
@@ -249,6 +249,76 @@ if (Should-Verify "dbeaver") {
             "Installed at: $dbeaver"
         } else {
             throw "DBeaver executable not found at $dbeaver"
+        }
+    }
+}
+
+# 15. AI: Antigravity CLI
+if (Should-Verify "antigravityCli") {
+    $results += Test-Component "Antigravity CLI" {
+        $cmd = Get-Command "agy.exe" -ErrorAction SilentlyContinue
+        if (-not $cmd) { $cmd = Get-Command "agy" -ErrorAction SilentlyContinue }
+        if (-not $cmd -and (Test-Path "C:\Tools\antigravity-cli\agy.exe")) {
+            $cmd = "C:\Tools\antigravity-cli\agy.exe"
+        }
+        if ($cmd) {
+            $v = & agy --version 2>$null | Select-Object -First 1
+            if ($v) { $v.Trim() } else { "Antigravity CLI detected on PATH" }
+        } else {
+            throw "agy command not found on PATH or C:\Tools\antigravity-cli"
+        }
+    }
+}
+
+# 16. AI: Antigravity IDE
+if (Should-Verify "antigravityIde") {
+    $results += Test-Component "Antigravity IDE" {
+        $ideCmd = Get-Command "antigravity-ide.cmd" -ErrorAction SilentlyContinue
+        if (-not $ideCmd) { $ideCmd = Get-Command "antigravity-ide" -ErrorAction SilentlyContinue }
+        $candidates = @(
+            "$env:LOCALAPPDATA\Programs\Antigravity IDE\Antigravity IDE.exe",
+            "C:\Program Files\Antigravity IDE\Antigravity IDE.exe"
+        )
+        $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($found) {
+            "Installed at: $found"
+        } elseif ($ideCmd) {
+            "Detected CLI at: $($ideCmd.Source)"
+        } else {
+            throw "Antigravity IDE executable not found in Program Files or LocalAppData"
+        }
+    }
+}
+
+# 17. AI: Cursor AI Editor
+if (Should-Verify "cursor") {
+    $results += Test-Component "Cursor Editor" {
+        $cursorCmd = Get-Command "cursor.cmd" -ErrorAction SilentlyContinue
+        if (-not $cursorCmd) { $cursorCmd = Get-Command "cursor" -ErrorAction SilentlyContinue }
+        $cursorExe = "$env:LOCALAPPDATA\Programs\cursor\Cursor.exe"
+        if (Test-Path $cursorExe) {
+            "Installed at: $cursorExe"
+        } elseif ($cursorCmd) {
+            "Found CLI on PATH: $($cursorCmd.Source)"
+        } else {
+            throw "Cursor executable not found on PATH or LocalAppData"
+        }
+    }
+}
+
+# 18. AI: OpenAI Codex CLI
+if (Should-Verify "codex") {
+    $results += Test-Component "Codex CLI" {
+        $codexCmd = Get-Command "codex.exe" -ErrorAction SilentlyContinue
+        if (-not $codexCmd) { $codexCmd = Get-Command "codex" -ErrorAction SilentlyContinue }
+        if (-not $codexCmd -and (Test-Path "C:\Tools\codex\codex.exe")) {
+            $codexCmd = "C:\Tools\codex\codex.exe"
+        }
+        if ($codexCmd) {
+            $v = & codex --version 2>$null | Select-Object -First 1
+            if ($v) { $v.Trim() } else { "Codex CLI found on PATH" }
+        } else {
+            throw "codex.exe not found on PATH or C:\Tools\codex"
         }
     }
 }

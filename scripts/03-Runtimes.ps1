@@ -12,9 +12,11 @@ param(
 )
 
 $modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "..\modules"
-Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Force
-Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -Force
-Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -Force
+if (-not (Get-Command "Write-Log" -ErrorAction SilentlyContinue)) {
+    Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
+}
+Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -DisableNameChecking
+Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -DisableNameChecking
 
 Write-LogHeader "Phase 3: Development Runtimes (Java, Node.js, Python, Gradle)"
 

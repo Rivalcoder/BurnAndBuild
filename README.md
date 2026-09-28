@@ -4,9 +4,9 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-grade, interactive, modular, and idempotent automation framework designed to configure a fresh, disposable Windows VM into a fully loaded software, web, and mobile development environment in under 10 minutes.
+A production-grade, interactive, modular, and idempotent automation framework designed to configure a fresh, disposable Windows VM into a fully loaded software, AI, web, and mobile development environment in under 10 minutes.
 
-When executed, it **interactively asks which tools you want to install** (Flutter, Node.js, Python, Docker, Java, Android SDK, VS Code, Git, Chrome, Postman, etc.) and provisions only the checked tools.
+When executed, it **interactively asks which tools you want to install** (Antigravity CLI/IDE, Cursor, OpenAI Codex, Flutter, Node.js, Python, Docker, Java, Android SDK, VS Code, Git, Chrome, Postman, etc.) and provisions only the checked tools.
 
 ---
 
@@ -37,11 +37,11 @@ When executed, it **interactively asks which tools you want to install** (Flutte
                                                        |
          +---------------------------------------------+---------------------------------------------+
          |                                             |                                             |
-  [ 06-Docker ]                                 [ 07-IDEs-Editors ]                           [ 08-Shell-Profile ]
-   - Docker Desktop                              - VS Code + Dynamic Extensions                - posh-git / PSReadLine
-   - WSL2 / Hyper-V Setup                        - Notepad++ / Chrome                          - Developer Aliases (g, f, d)
-   - Docker CLI & Compose                        - Postman / DBeaver                           - Instant reload-env helper
-         |                                             |                                             |
+  [ 06-Docker ]                                 [ 07-IDEs-Editors ]                           [ 08-AI-Tools ]
+   - Docker Desktop                              - VS Code + Dynamic Extensions                - Antigravity CLI (agy)
+   - WSL2 / Hyper-V Setup                        - Notepad++ / Chrome                          - Antigravity IDE
+   - Docker CLI & Compose                        - Postman / DBeaver                           - Cursor AI Editor
+         |                                             |                               - OpenAI Codex CLI
          +---------------------------------------------+---------------------------------------------+
                                                        |
                                             [ 09-Persistence-Setup ]
@@ -76,6 +76,7 @@ VM-Tool/
 │   ├── 05-Flutter-SDK.ps1        # Google Flutter SDK, PATH, Android/Java linking, flutter doctor
 │   ├── 06-Docker.ps1             # Docker Desktop, WSL2/Virtualization prerequisites, CLI PATH
 │   ├── 07-IDEs-Editors.ps1       # VS Code (+ dynamic extensions for selected tools), Chrome, Postman
+│   ├── 08-AI-Tools.ps1           # Antigravity CLI (agy), Antigravity IDE, Cursor, OpenAI Codex
 │   ├── 08-Shell-Profile.ps1      # PowerShell profile, posh-git, PSReadLine prediction, aliases
 │   └── 09-Persistence-Setup.ps1  # Git identity, SSH key generation, cache redirection (.cache)
 ├── tests/
@@ -93,7 +94,7 @@ VM-Tool/
 
 ### Method 1: Double-Click Launcher (Easiest)
 
-Simply double-click **`Start-Setup.bat`** in File Explorer. It automatically prompts for Administrator rights and opens the interactive Tool Selection checklist!
+Double-click **`Start-Setup.bat`** in File Explorer. It automatically prompts for Administrator rights and opens the interactive Tool Selection checklist!
 
 ### Method 2: PowerShell Terminal
 
@@ -112,6 +113,7 @@ A modern graphical window will appear allowing you to check or uncheck which too
 
 When launched, the tool prompts you with:
 - **Checkboxes for all tools:**
+  - 🤖 **AI & Autonomous Agents**: Antigravity CLI (`agy`), Antigravity IDE, Cursor AI Editor, OpenAI Codex CLI
   - 📱 **Mobile Development**: Flutter SDK, Android SDK & Tools, Java JDK 17 (Temurin)
   - 🌐 **Web & Backend Runtimes**: Node.js LTS & npm (via fnm), Python 3.12 & uv, Gradle
   - 🐳 **Containers & Cloud**: Docker Desktop
@@ -121,11 +123,12 @@ When launched, the tool prompts you with:
   - 🌐 **Browsers**: Google Chrome (for web & Flutter web debugging)
   - ⚙️ **Windows Optimizations**: NTFS Long Paths (>260 chars), Developer Mode, Never Sleep
 - **One-Click Quick Presets:**
-  - `[ 📱 Flutter & Mobile ]`: Selects Flutter + Android SDK + Java 17 + Git + VS Code + Chrome
-  - `[ 🌐 Full-Stack Web ]`: Selects Node.js + Python + Docker + Git + VS Code + Chrome + Postman
-  - `[ 🐳 Docker / DevOps ]`: Selects Docker + Python + Git + PowerShell 7 + VS Code
-  - `[ ✨ Select All ]`: Selects all 14 tools
-  - `[ 🧹 Clear All ]`: Unchecks all tools
+  - `[ AI & Agents ]`: Antigravity CLI + Antigravity IDE + Cursor + Codex + Git + Node + Python + VS Code
+  - `[ Mobile / Flutter ]`: Flutter + Android SDK + Java 17 + Git + VS Code + Chrome
+  - `[ Full-Stack Web ]`: Node.js + Python + Docker + Git + VS Code + Chrome + Postman
+  - `[ Docker & DevOps ]`: Docker + Python + Git + PowerShell 7 + VS Code
+  - `[ Select All ]`: Selects all tools
+  - `[ Clear All ]`: Unchecks all tools
 - **Start Installation**: Begins installing only the checked items!
 
 ---
@@ -138,7 +141,8 @@ For automated pipelines (Azure DevOps, GitHub Actions, Packer, Golden Images, or
 | :--- | :--- |
 | `.\bootstrap.ps1` | **Interactive mode** (opens GUI Checklist dialog). |
 | `.\bootstrap.ps1 -NoGui` | **Interactive console mode** (numbered terminal menu). |
-| `.\bootstrap.ps1 -Tools "flutter, node, python, docker"` | Installs **only** Flutter, Node, Python, Docker (and prerequisites). |
+| `.\bootstrap.ps1 -Preset "ai"` | Installs **Antigravity CLI/IDE, Cursor, Codex, Git, Node, Python, VS Code**. |
+| `.\bootstrap.ps1 -Tools "antigravity, cursor, codex, flutter, node, docker"` | Installs only specified tools. |
 | `.\bootstrap.ps1 -Preset "mobile"` | Installs the Flutter & Android Mobile preset unattended. |
 | `.\bootstrap.ps1 -Preset "web"` | Installs the Full-Stack Web preset unattended. |
 | `.\bootstrap.ps1 -Full` | Installs everything in the catalog unattended. |
@@ -156,5 +160,5 @@ Run the dynamic smoke test anytime to ensure your installed tools, paths, and en
 .\tests\Verify-Installation.ps1
 
 # Or verify specific tools
-.\tests\Verify-Installation.ps1 -SelectedTools "flutter", "node", "python", "docker"
+.\tests\Verify-Installation.ps1 -SelectedTools "antigravityIde", "flutter", "node"
 ```
