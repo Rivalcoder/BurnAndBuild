@@ -72,13 +72,8 @@ When executed, BurnAndBuild **interactively asks which tools you want to install
 
 ```
 BurnAndBuild/
-├── burnandbuild.bat              # Primary Windows one-click launcher (Auto-Admin)
-├── burnandbuild.ps1              # Primary Windows/PowerShell Core master CLI
-├── burnandbuild.sh               # Primary Linux master orchestrator (Auto-Sudo & TUI)
-├── Start-Setup.bat               # Windows compatibility launcher
-├── Start-Setup.sh                # Linux compatibility launcher
-├── bootstrap.ps1                 # Windows master orchestrator
-├── bootstrap.sh                  # Linux compatibility wrapper
+├── Start-Windows.bat             # Primary Windows one-click launcher (Auto-Admin)
+├── Start-Linux.sh                # Primary Linux one-click launcher (Auto-Sudo & TUI)
 ├── config.json                   # Cross-platform package catalog, URLs & presets
 ├── modules/
 │   ├── ToolSelector.psm1         # Windows: Modern WPF GUI & interactive CLI engine
@@ -91,6 +86,10 @@ BurnAndBuild/
 │       ├── package-manager.sh    # Linux: Distro detection (apt/dnf/pacman) abstraction
 │       └── tool-selector.sh      # Linux: Interactive terminal checklist TUI
 ├── scripts/
+│   ├── bootstrap.ps1             # Windows master orchestrator engine
+│   ├── burnandbuild.ps1          # Windows CLI convenience wrapper
+│   ├── burnandbuild.sh           # Linux master orchestrator engine
+│   ├── bootstrap.sh              # Linux CLI convenience wrapper
 │   ├── 01-Base-Windows.ps1       # Windows: Long paths, dev mode, power, explorer
 │   ├── 02-Common-CLI.ps1         # Windows: 7-Zip, Git, jq, ripgrep, fzf, pwsh 7, gh
 │   ├── 03-Runtimes.ps1           # Windows: Node (fnm), Python (uv), Java 17, Gradle
@@ -129,14 +128,15 @@ BurnAndBuild/
 ### 🪟 Windows Setup
 
 #### Method 1: Double-Click Launcher (Easiest)
-Double-click **`burnandbuild.bat`** (or `Start-Setup.bat`) in File Explorer. It automatically prompts for Administrator rights and opens the interactive graphical checklist window.
+Double-click **`Start-Windows.bat`** in File Explorer. It automatically prompts for Administrator rights and opens the interactive graphical checklist window.
 
-#### Method 2: Elevated PowerShell
+#### Method 2: Elevated PowerShell / CLI
 Open **PowerShell as Administrator** and execute:
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
-.\burnandbuild.ps1
+.\scripts\bootstrap.ps1
 ```
+*(or pass parameters directly to `.\Start-Windows.bat`)*
 
 ---
 
@@ -145,8 +145,8 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 #### Interactive Terminal Checklist Menu:
 Clone or download the repository, then run:
 ```bash
-chmod +x burnandbuild.sh
-sudo ./burnandbuild.sh
+chmod +x Start-Linux.sh
+sudo ./Start-Linux.sh
 ```
 A clean, interactive terminal checklist will appear allowing you to toggle tools by number (e.g. `1,3,5`), apply one-letter presets (`AI`, `M`, `W`, `D`, `A`, `C`), and press **ENTER** to provision.
 
@@ -156,18 +156,18 @@ A clean, interactive terminal checklist will appear allowing you to toggle tools
 
 For CI/CD pipelines, cloud-init, Azure Custom Script Extensions, Packer golden images, or SSH:
 
-| Workflow | Windows PowerShell Command | Linux Bash Command |
+| Workflow | Windows Command | Linux Bash Command |
 | :--- | :--- | :--- |
-| **Interactive Selection** | `.\burnandbuild.ps1` | `sudo ./burnandbuild.sh` |
-| **Console Menu Only** | `.\burnandbuild.ps1 -NoGui` | `sudo ./burnandbuild.sh --cli` |
-| **AI & Autonomous Agents** | `.\burnandbuild.ps1 -Preset "ai"` | `sudo ./burnandbuild.sh --preset ai` |
-| **Mobile / Flutter Preset** | `.\burnandbuild.ps1 -Preset "mobile"` | `sudo ./burnandbuild.sh --preset mobile` |
-| **Full-Stack Web Preset** | `.\burnandbuild.ps1 -Preset "web"` | `sudo ./burnandbuild.sh --preset web` |
-| **DevOps / Containers Preset** | `.\burnandbuild.ps1 -Preset "devops"` | `sudo ./burnandbuild.sh --preset devops` |
-| **Specific Tools Only** | `.\burnandbuild.ps1 -Tools "antigravityCli,cursor,node,python"` | `sudo ./burnandbuild.sh --tools "antigravityCli,cursor,node,python"` |
-| **Install Entire Catalog** | `.\burnandbuild.ps1 -Full` | `sudo ./burnandbuild.sh --full` |
-| **Minimal (CLI & Base)** | `.\burnandbuild.ps1 -BaseOnly` | `sudo ./burnandbuild.sh --base-only` |
-| **With Git Credentials** | `.\burnandbuild.ps1 -GitName "Jane" -GitEmail "j@ex.com"` | `sudo ./burnandbuild.sh --git-name "Jane" --git-email "j@ex.com"` |
+| **Interactive Selection** | `.\Start-Windows.bat` | `sudo ./Start-Linux.sh` |
+| **Console Menu Only** | `.\Start-Windows.bat -NoGui` | `sudo ./Start-Linux.sh --cli` |
+| **AI & Autonomous Agents** | `.\Start-Windows.bat -Preset "ai"` | `sudo ./Start-Linux.sh --preset ai` |
+| **Mobile / Flutter Preset** | `.\Start-Windows.bat -Preset "mobile"` | `sudo ./Start-Linux.sh --preset mobile` |
+| **Full-Stack Web Preset** | `.\Start-Windows.bat -Preset "web"` | `sudo ./Start-Linux.sh --preset web` |
+| **DevOps / Containers Preset** | `.\Start-Windows.bat -Preset "devops"` | `sudo ./Start-Linux.sh --preset devops` |
+| **Specific Tools Only** | `.\Start-Windows.bat -Tools "antigravityCli,cursor,node,python"` | `sudo ./Start-Linux.sh --tools "antigravityCli,cursor,node,python"` |
+| **Install Entire Catalog** | `.\Start-Windows.bat -Full` | `sudo ./Start-Linux.sh --full` |
+| **Minimal (CLI & Base)** | `.\Start-Windows.bat -BaseOnly` | `sudo ./Start-Linux.sh --base-only` |
+| **With Git Credentials** | `.\Start-Windows.bat -GitName "Jane" -GitEmail "j@ex.com"` | `sudo ./Start-Linux.sh --git-name "Jane" --git-email "j@ex.com"` |
 
 ---
 

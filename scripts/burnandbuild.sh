@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# burnandbuild.sh
+# scripts/burnandbuild.sh
 # Master Orchestrator for BurnAndBuild on Linux
 # Supports both Interactive Terminal Checklist & Unattended Command-Line Flags
 
@@ -7,13 +7,24 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Resolve repository root directory and scripts directory robustly
+if [ -f "$SCRIPT_DIR/config.json" ]; then
+    ROOT_DIR="$SCRIPT_DIR"
+    LINUX_SCRIPTS_DIR="$ROOT_DIR/scripts/linux"
+else
+    ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+    LINUX_SCRIPTS_DIR="$SCRIPT_DIR/linux"
+fi
+
 # Help Check before elevation
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     cat << EOF
 BurnAndBuild - Disposable Dev Environment Automation (Linux)
 
 Usage:
-  sudo ./burnandbuild.sh [OPTIONS]
+  sudo ./Start-Linux.sh [OPTIONS]
+  or
+  sudo bash ./scripts/burnandbuild.sh [OPTIONS]
 
 Options:
   -t, --tools <list>       Comma or space-separated list of tool IDs to install
@@ -34,9 +45,9 @@ Presets:
   minimal  Base Linux, Git, VS Code
 
 Examples:
-  sudo ./burnandbuild.sh                      # Interactive menu
-  sudo ./burnandbuild.sh --preset ai          # Unattended AI preset
-  sudo ./burnandbuild.sh --full               # Full development catalog
+  sudo ./Start-Linux.sh                      # Interactive menu
+  sudo ./Start-Linux.sh --preset ai          # Unattended AI preset
+  sudo ./Start-Linux.sh --full               # Full development catalog
 EOF
     exit 0
 fi
@@ -54,11 +65,11 @@ fi
 
 # 2. Source Core Modules
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/modules/linux/logging.sh"
+source "$ROOT_DIR/modules/linux/logging.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/modules/linux/package-manager.sh"
+source "$ROOT_DIR/modules/linux/package-manager.sh"
 # shellcheck disable=SC1091
-source "$SCRIPT_DIR/modules/linux/tool-selector.sh"
+source "$ROOT_DIR/modules/linux/tool-selector.sh"
 
 # 3. Argument Parsing
 EXPLICIT_TOOLS=""
@@ -68,14 +79,14 @@ NO_GUI=0
 BASE_ONLY=0
 GIT_NAME=""
 GIT_EMAIL=""
-CONFIG_PATH="$SCRIPT_DIR/config.json"
+CONFIG_PATH="$ROOT_DIR/config.json"
 
 show_help() {
     cat << EOF
 BurnAndBuild - Disposable Dev Environment Automation (Linux)
 
 Usage:
-  sudo ./burnandbuild.sh [OPTIONS]
+  sudo ./Start-Linux.sh [OPTIONS]
 
 Options:
   -t, --tools <list>       Comma or space-separated list of tool IDs to install
@@ -96,9 +107,9 @@ Presets:
   minimal  Base Linux, Git, VS Code
 
 Examples:
-  sudo ./burnandbuild.sh                      # Interactive menu
-  sudo ./burnandbuild.sh --preset ai          # Unattended AI preset
-  sudo ./burnandbuild.sh --full               # Full development catalog
+  sudo ./Start-Linux.sh                      # Interactive menu
+  sudo ./Start-Linux.sh --preset ai          # Unattended AI preset
+  sudo ./Start-Linux.sh --full               # Full development catalog
 EOF
     exit 0
 }
@@ -141,14 +152,21 @@ while [ "$#" -gt 0 ]; do
             show_help
             ;;
         *)
-            log_warn "Unknown argument: $1"
-            shift
+            echo "Unknown option: $1" >&2
+            show_help
             ;;
     esac
 done
 
-# 4. Display Banner
-OS_NAME="$(uname -s) $(uname -r)"
+# Initialize Package Manager
+detect_linux_distro
+
+# Initialize Logger
+LOG_DIR="/var/log/burnandbuild"
+init_logger "$LOG_DIR" "burnandbuild"
+
+# 4. Banner Display
+OS_NAME="Linux"
 if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
@@ -156,7 +174,7 @@ if [ -f /etc/os-release ]; then
 fi
 
 printf "\033[36m================================================================================\033[0m\n"
-printf "\033[1m\033[36m          BURNANDBUILD - DISPOSABLE DEV ENVIRONMENT ORCHESTRATOR\033[0m\n"
+printf "\033[36m          BURNANDBUILD - DISPOSABLE DEV ENVIRONMENT ORCHESTRATOR (LINUX)       \033[0m\n"
 printf "\033[36m================================================================================\033[0m\n"
 printf "  Target OS       : %s\n" "$OS_NAME"
 printf "  Architecture    : %s\n" "$(uname -m)"
@@ -227,14 +245,14 @@ tool_selected() {
 # 6. Execute Provisioning Pipeline
 # Phase 1: Base Linux
 if tool_selected "baseLinux" || tool_selected "baseWindows"; then
-    bash "$SCRIPT_DIR/scripts/linux/01-base-linux.sh"
+    bash "$LINUX_SCRIPTS_DIR/01-base-linux.sh"
 else
     log_info "Phase 1 (Base Linux) skipped per tool selection."
 fi
 
 # Phase 2: Core CLI
 if tool_selected "gitCli"; then
-    bash "$SCRIPT_DIR/scripts/linux/02-common-cli.sh"
+    bash "$LINUX_SCRIPTS_DIR/02-common-cli.sh"
 else
     log_info "Phase 2 (Core CLI) skipped per tool selection."
 fi
@@ -245,28 +263,28 @@ for r in "java" "node" "python" "gradle"; do
     if tool_selected "$r"; then RUNTIMES_TO_RUN+=("$r"); fi
 done
 if [ "${#RUNTIMES_TO_RUN[@]}" -gt 0 ]; then
-    bash "$SCRIPT_DIR/scripts/linux/03-runtimes.sh" "${RUNTIMES_TO_RUN[@]}"
+    bash "$LINUX_SCRIPTS_DIR/03-runtimes.sh" "${RUNTIMES_TO_RUN[@]}"
 else
     log_info "Phase 3 (Runtimes) skipped: none selected."
 fi
 
 # Phase 4: Android SDK
 if tool_selected "android"; then
-    bash "$SCRIPT_DIR/scripts/linux/04-android-sdk.sh"
+    bash "$LINUX_SCRIPTS_DIR/04-android-sdk.sh"
 else
     log_info "Phase 4 (Android SDK) skipped per tool selection."
 fi
 
 # Phase 5: Flutter SDK
 if tool_selected "flutter"; then
-    bash "$SCRIPT_DIR/scripts/linux/05-flutter-sdk.sh"
+    bash "$LINUX_SCRIPTS_DIR/05-flutter-sdk.sh"
 else
     log_info "Phase 5 (Flutter SDK) skipped per tool selection."
 fi
 
 # Phase 6: Docker
 if tool_selected "docker"; then
-    bash "$SCRIPT_DIR/scripts/linux/06-docker.sh"
+    bash "$LINUX_SCRIPTS_DIR/06-docker.sh"
 else
     log_info "Phase 6 (Docker) skipped per tool selection."
 fi
@@ -277,7 +295,7 @@ for id in "vscode" "notepadpp" "chrome" "brave" "postman" "dbeaver" "powerbi" "j
     if tool_selected "$id"; then IDES_TO_RUN+=("$id"); fi
 done
 if [ "${#IDES_TO_RUN[@]}" -gt 0 ]; then
-    bash "$SCRIPT_DIR/scripts/linux/07-ides-editors.sh" "${IDES_TO_RUN[@]}"
+    bash "$LINUX_SCRIPTS_DIR/07-ides-editors.sh" "${IDES_TO_RUN[@]}"
 else
     log_info "Phase 7 (IDEs & Editors) skipped per tool selection."
 fi
@@ -288,16 +306,16 @@ for ai in "antigravityCli" "antigravityIde" "cursor" "codex"; do
     if tool_selected "$ai"; then AI_TO_RUN+=("$ai"); fi
 done
 if [ "${#AI_TO_RUN[@]}" -gt 0 ]; then
-    bash "$SCRIPT_DIR/scripts/linux/08-ai-tools.sh" "${AI_TO_RUN[@]}"
+    bash "$LINUX_SCRIPTS_DIR/08-ai-tools.sh" "${AI_TO_RUN[@]}"
 else
     log_info "Phase 8 (AI Tools) skipped per tool selection."
 fi
 
 # Phase 9: Shell Profile & Aliases
-bash "$SCRIPT_DIR/scripts/linux/09-shell-profile.sh"
+bash "$LINUX_SCRIPTS_DIR/09-shell-profile.sh"
 
 # Phase 10: Persistence, SSH & Git
-bash "$SCRIPT_DIR/scripts/linux/10-persistence-setup.sh" "$GIT_NAME" "$GIT_EMAIL"
+bash "$LINUX_SCRIPTS_DIR/10-persistence-setup.sh" "$GIT_NAME" "$GIT_EMAIL"
 
 END_TIME=$(date +%s)
 DURATION=$(( (END_TIME - START_TIME) / 60 ))
@@ -308,6 +326,6 @@ log_success "BURNANDBUILD DEV ENVIRONMENT SETUP COMPLETED IN $DURATION MINUTES!"
 printf "\033[32m================================================================================\033[0m\n\n"
 
 # Run Verification Smoke Test
-if [ -f "$SCRIPT_DIR/tests/verify-installation.sh" ]; then
-    bash "$SCRIPT_DIR/tests/verify-installation.sh" "${SELECTED_TOOLS[@]}" || true
+if [ -f "$ROOT_DIR/tests/verify-installation.sh" ]; then
+    bash "$ROOT_DIR/tests/verify-installation.sh" "${SELECTED_TOOLS[@]}" || true
 fi

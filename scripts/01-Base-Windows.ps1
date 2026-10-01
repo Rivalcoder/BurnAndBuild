@@ -27,8 +27,36 @@ if (-not $isAdmin) {
 
 # 2. Execution Policy
 Write-Log -Level INFO -Message "Setting PowerShell ExecutionPolicy to RemoteSigned..."
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force -ErrorAction SilentlyContinue
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction SilentlyContinue
+try {
+    # Set directly in registry to bypass PowerShell ExecutionPolicyOverride warning/error when Process policy is Bypass
+    $regPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell",
+        "HKCU:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell"
+    )
+    foreach ($reg in $regPaths) {
+        if (-not (Test-Path $reg)) {
+            New-Item -Path $reg -Force -ErrorAction SilentlyContinue | Out-Null
+        }
+        Set-ItemProperty -Path $reg -Name "ExecutionPolicy" -Value "RemoteSigned" -Force -ErrorAction SilentlyContinue
+    }
+} catch {
+    Write-Log -Level DEBUG -Message "Registry ExecutionPolicy update notice: $_"
+}
+
+try {
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+} catch {
+    Write-Log -Level DEBUG -Message "LocalMachine ExecutionPolicy notice: $_"
+}
+
+try {
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+} catch {
+    Write-Log -Level DEBUG -Message "CurrentUser ExecutionPolicy notice: $_"
+}
+
+Write-Log -Level SUCCESS -Message "PowerShell ExecutionPolicy configured (RemoteSigned)."
 
 # 3. Create Standard Directories
 $standardDirs = @(

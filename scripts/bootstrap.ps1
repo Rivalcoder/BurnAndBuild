@@ -28,6 +28,12 @@
 .PARAMETER BaseOnly
     Runs only Base Windows configuration and core CLI tools.
 
+.PARAMETER SkipAndroid
+    Skips Android SDK installation even if part of a preset.
+
+.PARAMETER SkipIDEs
+    Skips Visual Studio Code and editor installations.
+
 .PARAMETER GitName
     Optional Git user name to configure.
 
@@ -35,19 +41,19 @@
     Optional Git email to configure.
 
 .PARAMETER ConfigPath
-    Custom path to config.json. Defaults to config.json in script root.
+    Custom path to config.json. Defaults to config.json in repo root.
 
 .EXAMPLE
     # Default: Launches interactive GUI checklist to choose tools
-    .\bootstrap.ps1
+    .\Start-Windows.bat
 
 .EXAMPLE
     # Unattended: Install specific tools
-    .\bootstrap.ps1 -Tools "antigravity, cursor, codex, flutter, node, python, docker"
+    .\scripts\bootstrap.ps1 -Tools "antigravity, cursor, codex, flutter, node, python, docker"
 
 .EXAMPLE
     # Unattended: Install AI & Agents preset
-    .\bootstrap.ps1 -Preset "ai"
+    .\scripts\bootstrap.ps1 -Preset "ai"
 #>
 
 [CmdletBinding()]
@@ -86,10 +92,19 @@ param(
     [string]$ConfigPath = ""
 )
 
-# Resolve Script Directory and ConfigPath robustly
+# Resolve Script Directory and Repository Root robustly
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
-if (-not $ConfigPath) { $ConfigPath = Join-Path -Path $scriptDir -ChildPath "config.json" }
+
+if (Test-Path (Join-Path -Path $scriptDir -ChildPath "config.json")) {
+    $rootDir = $scriptDir
+    $scriptsDir = Join-Path -Path $rootDir -ChildPath "scripts"
+} else {
+    $rootDir = (Resolve-Path (Join-Path -Path $scriptDir -ChildPath "..")).Path
+    $scriptsDir = $scriptDir
+}
+
+if (-not $ConfigPath) { $ConfigPath = Join-Path -Path $rootDir -ChildPath "config.json" }
 
 # 1. Administrator Elevation Check & Self-Elevation
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -108,14 +123,14 @@ if (-not $isAdmin) {
     if ($SkipIDEs) { $argList += " -SkipIDEs" }
     if ($GitName) { $argList += " -GitName `"$GitName`"" }
     if ($GitEmail) { $argList += " -GitEmail `"$GitEmail`"" }
-    if ($ConfigPath -ne "$PSScriptRoot\config.json") { $argList += " -ConfigPath `"$ConfigPath`"" }
+    if ($ConfigPath -ne (Join-Path -Path $rootDir -ChildPath "config.json")) { $argList += " -ConfigPath `"$ConfigPath`"" }
 
     Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $argList
     exit
 }
 
 # 2. Import Core Modules
-$modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "modules"
+$modulesPath = Join-Path -Path $rootDir -ChildPath "modules"
 Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
 Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -DisableNameChecking
 Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -DisableNameChecking
@@ -174,7 +189,7 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 try {
     # Phase 1: Base Windows OS Settings
     if ($selectedTools -contains "baseWindows") {
-        $p1 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\01-Base-Windows.ps1"
+        $p1 = Join-Path -Path $scriptsDir -ChildPath "01-Base-Windows.ps1"
         & $p1 -ConfigPath $ConfigPath
     } else {
         Write-Log -Level INFO -Message "Phase 1 (Base Windows) skipped per tool selection."
@@ -182,7 +197,7 @@ try {
 
     # Phase 2: Core CLI Tools (Git, 7-Zip, jq, pwsh 7, gh)
     if ($selectedTools -contains "gitCli") {
-        $p2 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\02-Common-CLI.ps1"
+        $p2 = Join-Path -Path $scriptsDir -ChildPath "02-Common-CLI.ps1"
         & $p2 -ConfigPath $ConfigPath
     } else {
         Write-Log -Level INFO -Message "Phase 2 (Core CLI) skipped per tool selection."
@@ -196,7 +211,7 @@ try {
     }
 
     if ($hasRuntime) {
-        $p3 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\03-Runtimes.ps1"
+        $p3 = Join-Path -Path $scriptsDir -ChildPath "03-Runtimes.ps1"
         & $p3 -ConfigPath $ConfigPath -SelectedTools $selectedTools
     } else {
         Write-Log -Level INFO -Message "Phase 3 (Runtimes) skipped: none selected."
@@ -204,7 +219,7 @@ try {
 
     # Phase 4: Android SDK
     if ($selectedTools -contains "android") {
-        $p4 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\04-Android-SDK.ps1"
+        $p4 = Join-Path -Path $scriptsDir -ChildPath "04-Android-SDK.ps1"
         & $p4 -ConfigPath $ConfigPath
     } else {
         Write-Log -Level INFO -Message "Phase 4 (Android SDK) skipped per tool selection."
@@ -212,7 +227,7 @@ try {
 
     # Phase 5: Flutter SDK
     if ($selectedTools -contains "flutter") {
-        $p5 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\05-Flutter-SDK.ps1"
+        $p5 = Join-Path -Path $scriptsDir -ChildPath "05-Flutter-SDK.ps1"
         & $p5 -ConfigPath $ConfigPath
     } else {
         Write-Log -Level INFO -Message "Phase 5 (Flutter SDK) skipped per tool selection."
@@ -220,7 +235,7 @@ try {
 
     # Phase 6: Docker Desktop
     if ($selectedTools -contains "docker") {
-        $p6 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\06-Docker.ps1"
+        $p6 = Join-Path -Path $scriptsDir -ChildPath "06-Docker.ps1"
         & $p6 -ConfigPath $ConfigPath
     } else {
         Write-Log -Level INFO -Message "Phase 6 (Docker Desktop) skipped per tool selection."
@@ -234,7 +249,7 @@ try {
     }
 
     if ($hasIde) {
-        $p7 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\07-IDEs-Editors.ps1"
+        $p7 = Join-Path -Path $scriptsDir -ChildPath "07-IDEs-Editors.ps1"
         & $p7 -ConfigPath $ConfigPath -SelectedTools $selectedTools
     } else {
         Write-Log -Level INFO -Message "Phase 7 (IDEs & Editors) skipped per tool selection."
@@ -248,18 +263,18 @@ try {
     }
 
     if ($hasAi) {
-        $p8 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\08-AI-Tools.ps1"
+        $p8 = Join-Path -Path $scriptsDir -ChildPath "08-AI-Tools.ps1"
         & $p8 -ConfigPath $ConfigPath -SelectedTools $selectedTools
     } else {
         Write-Log -Level INFO -Message "Phase 8 (AI Tools) skipped per tool selection."
     }
 
     # Phase 9: Shell Profile & Developer Aliases
-    $p9 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\08-Shell-Profile.ps1"
+    $p9 = Join-Path -Path $scriptsDir -ChildPath "08-Shell-Profile.ps1"
     & $p9 -SelectedTools $selectedTools
 
     # Phase 10: Persistence Setup & Caches
-    $p10 = Join-Path -Path $PSScriptRoot -ChildPath "scripts\09-Persistence-Setup.ps1"
+    $p10 = Join-Path -Path $scriptsDir -ChildPath "09-Persistence-Setup.ps1"
     & $p10 -ConfigPath $ConfigPath -GitUserName $GitName -GitUserEmail $GitEmail -SelectedTools $selectedTools
 
     # Final environment sync
@@ -273,7 +288,7 @@ try {
     Write-Host ""
 
     # Verification Smoke Test for Selected Tools
-    $testScript = Join-Path -Path $PSScriptRoot -ChildPath "tests\Verify-Installation.ps1"
+    $testScript = Join-Path -Path $rootDir -ChildPath "tests\Verify-Installation.ps1"
     if (Test-Path $testScript) {
         & $testScript -SelectedTools $selectedTools
     }

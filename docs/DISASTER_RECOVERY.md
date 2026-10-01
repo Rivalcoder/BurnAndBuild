@@ -35,25 +35,25 @@ flowchart TD
 
 #### On Windows:
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $repo = "$env:TEMP\BurnAndBuild"; git clone https://github.com/<your-username>/BurnAndBuild.git $repo; cd $repo; .\burnandbuild.ps1 -Full
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; $repo = "$env:TEMP\BurnAndBuild"; git clone https://github.com/<your-username>/BurnAndBuild.git $repo; cd $repo; .\Start-Windows.bat -Full
 ```
 
 *Or, if files are downloaded locally on Windows:*
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
 cd "C:\Path\To\BurnAndBuild"
-.\burnandbuild.bat
+.\Start-Windows.bat
 ```
 
 #### On Linux:
 ```bash
-git clone https://github.com/<your-username>/BurnAndBuild.git /tmp/BurnAndBuild && cd /tmp/BurnAndBuild && sudo ./burnandbuild.sh --full
+git clone https://github.com/<your-username>/BurnAndBuild.git /tmp/BurnAndBuild && cd /tmp/BurnAndBuild && sudo ./Start-Linux.sh --full
 ```
 
 *Or, interactive mode on Linux:*
 ```bash
 cd /tmp/BurnAndBuild
-sudo ./burnandbuild.sh
+sudo ./Start-Linux.sh
 ```
 
 ---
