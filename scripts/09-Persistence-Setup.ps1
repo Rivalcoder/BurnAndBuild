@@ -19,13 +19,25 @@ param(
     [string[]]$SelectedTools = @()
 )
 
-$modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "..\modules"
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
+
+if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
+    $cand = Join-Path -Path $scriptDir -ChildPath "..\config.json"
+    if (Test-Path $cand) {
+        $ConfigPath = (Resolve-Path $cand).Path
+    } elseif (Test-Path (Join-Path -Path (Get-Location).Path -ChildPath "config.json")) {
+        $ConfigPath = (Resolve-Path "config.json").Path
+    }
+}
+
+$modulesPath = Join-Path -Path $scriptDir -ChildPath "..\modules"
 if (-not (Get-Command "Write-Log" -ErrorAction SilentlyContinue)) {
     Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
 }
 Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -DisableNameChecking
 
-Write-LogHeader "Phase 9: Data Persistence, Cache Redirection, and Identity"
+Write-LogHeader "Phase 8: Data Persistence, Cache Redirection, and Identity"
 
 # Load Configuration
 $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json

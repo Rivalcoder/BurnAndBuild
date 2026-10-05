@@ -26,7 +26,7 @@
       "category": "AI & Autonomous Agents",
       "tag": "AI CLI",
       "description": "Google Antigravity TUI terminal assistant with multi-step reasoning, slash commands & subagents",
-      "defaultChecked": true,
+      "defaultChecked": false,
       "wingetId": "Google.AntigravityCLI"
     },
     {
@@ -35,7 +35,7 @@
       "category": "AI & Autonomous Agents",
       "tag": "AI IDE",
       "description": "Google AI-first standalone development environment with agent workspace and auxiliary panes",
-      "defaultChecked": true,
+      "defaultChecked": false,
       "wingetId": "Google.AntigravityIDE"
     },
     {
@@ -44,7 +44,7 @@
       "category": "AI & Autonomous Agents",
       "tag": "AI IDE",
       "description": "Anysphere Cursor AI-powered code editor with inline code generation and chat lenses",
-      "defaultChecked": true,
+      "defaultChecked": false,
       "wingetId": "Anysphere.Cursor"
     },
     {
@@ -53,7 +53,7 @@
       "category": "AI & Autonomous Agents",
       "tag": "AI CLI",
       "description": "OpenAI Codex command-line interface for autonomous coding, code reviews, and reasoning",
-      "defaultChecked": true,
+      "defaultChecked": false,
       "wingetId": "OpenAI.Codex"
     },
     {
@@ -62,7 +62,7 @@
       "category": "Mobile Development",
       "tag": "Framework",
       "description": "Google Flutter SDK for cross-platform iOS, Android, Web & Desktop development",
-      "defaultChecked": true,
+      "defaultChecked": false,
       "requires": ["gitCli"]
     },
     {
@@ -71,7 +71,7 @@
       "category": "Mobile Development",
       "tag": "Mobile SDK",
       "description": "Android platform-tools (adb), cmdline-tools, build-tools 34, auto-accepted licenses",
-      "defaultChecked": true,
+      "defaultChecked": false,
       "requires": ["java"]
     },
     {
@@ -80,7 +80,7 @@
       "category": "Web & Backend Runtimes",
       "tag": "Runtime",
       "description": "Node.js LTS runtime with npm package manager via Fast Node Manager (fnm)",
-      "defaultChecked": true
+      "defaultChecked": false
     },
     {
       "id": "python",
@@ -88,7 +88,7 @@
       "category": "Web & Backend Runtimes",
       "tag": "Runtime",
       "description": "Python 3.12 interpreter, pip, and uv ultra-fast package manager",
-      "defaultChecked": true
+      "defaultChecked": false
     },
     {
       "id": "docker",
@@ -96,7 +96,7 @@
       "category": "Containers & Cloud",
       "tag": "Containers",
       "description": "Docker engine, Docker Compose, container runtime & WSL2 integration",
-      "defaultChecked": true
+      "defaultChecked": false
     },
     {
       "id": "java",
@@ -104,7 +104,7 @@
       "category": "Languages & SDKs",
       "tag": "JDK",
       "description": "Eclipse Temurin OpenJDK 17 LTS, sets JAVA_HOME (Required for Android & Gradle)",
-      "defaultChecked": true
+      "defaultChecked": false
     },
     {
       "id": "gradle",
@@ -112,7 +112,7 @@
       "category": "Languages & SDKs",
       "tag": "Build Tool",
       "description": "Gradle build automation tool for Java, Kotlin & Android projects",
-      "defaultChecked": true,
+      "defaultChecked": false,
       "requires": ["java"]
     },
     {
@@ -121,7 +121,7 @@
       "category": "Core CLI & Shell",
       "tag": "CLI Tools",
       "description": "Git, GitHub CLI, 7-Zip, jq, ripgrep, fzf, PowerShell 7, Windows Terminal",
-      "defaultChecked": true
+      "defaultChecked": false
     },
     {
       "id": "vscode",
@@ -129,7 +129,7 @@
       "category": "IDEs & Code Editors",
       "tag": "IDE",
       "description": "VS Code with automated extensions tailored for selected tools",
-      "defaultChecked": true
+      "defaultChecked": false
     },
     {
       "id": "notepadpp",
@@ -145,7 +145,7 @@
       "category": "Browsers & Utilities",
       "tag": "Browser",
       "description": "Google Chrome browser (essential for Flutter web development & debugging)",
-      "defaultChecked": true
+      "defaultChecked": false
     },
     {
       "id": "brave",
@@ -170,7 +170,8 @@
       "category": "API & Database Tools",
       "tag": "Database",
       "description": "Universal database manager for PostgreSQL, MySQL, SQLite, and more",
-      "defaultChecked": false
+      "defaultChecked": false,
+      "wingetId": "DBeaver.DBeaver.Community"
     },
     {
       "id": "powerbi",
@@ -196,7 +197,7 @@
       "category": "System Configuration",
       "tag": "OS Tweaks",
       "description": "Win32 Long Paths (>260 chars), Dev Mode, Never Sleep, File Explorer tweaks",
-      "defaultChecked": true
+      "defaultChecked": false
     }
   ],
   "presets": {
@@ -304,7 +305,7 @@
       "powerbi": { "id": "Microsoft.PowerBI", "name": "Microsoft Power BI Desktop" },
       "jira": { "id": "Atlassian.AtlassianCLI", "name": "Atlassian Jira CLI" },
       "postman": { "id": "Postman.Postman", "name": "Postman API Platform" },
-      "dbeaver": { "id": "DBeaver.DBeaver", "name": "DBeaver Community Edition" }
+      "dbeaver": { "id": "DBeaver.DBeaver.Community", "name": "DBeaver Community Edition" }
     }
   },
   "flutterSdk": {

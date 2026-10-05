@@ -13,7 +13,7 @@ $rootDir = Split-Path -Path $scriptDir -Parent
 $modulesPath = Join-Path -Path $rootDir -ChildPath "modules"
 Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
 
-Write-LogHeader "Phase 9: PowerShell Environment and Shell Customization"
+Write-LogHeader "Phase 7: PowerShell Environment and Shell Customization"
 
 # 1. Check PowerShell Modules (posh-git, PSReadLine)
 Write-Log -Level INFO -Message "Checking PowerShell environment and modules..."

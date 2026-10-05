@@ -7,14 +7,27 @@ param(
     [string]$ConfigPath = "$PSScriptRoot\..\config.json"
 )
 
-$modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "..\modules"
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
+
+if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
+    $cand = Join-Path -Path $scriptDir -ChildPath "..\config.json"
+    if (Test-Path $cand) {
+        $ConfigPath = (Resolve-Path $cand).Path
+    } elseif (Test-Path (Join-Path -Path (Get-Location).Path -ChildPath "config.json")) {
+        $ConfigPath = (Resolve-Path "config.json").Path
+    }
+}
+
+$modulesPath = Join-Path -Path $scriptDir -ChildPath "..\modules"
 if (-not (Get-Command "Write-Log" -ErrorAction SilentlyContinue)) {
     Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
 }
 Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -DisableNameChecking
 Import-Module (Join-Path -Path $modulesPath -ChildPath "WinGetHelper.psm1") -DisableNameChecking
+Import-Module (Join-Path -Path $modulesPath -ChildPath "DownloadManager.psm1") -DisableNameChecking
 
-Write-LogHeader "Phase 6: Docker Desktop & Container Toolchain Automation"
+Write-LogHeader "Phase 4: Docker Desktop & Container Toolchain Automation"
 
 # Load Configuration
 $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
@@ -29,7 +42,7 @@ $dockerCmd = Get-Command "docker.exe" -ErrorAction SilentlyContinue
 $dockerApp = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
 
 if ($dockerCmd -or (Test-Path $dockerApp)) {
-    Write-Log -Level INFO -Message "Docker Desktop is already installed on this machine."
+    Write-Log -Level SUCCESS -Message "Docker Desktop is already installed on this machine. Skipping download and installation."
 } else {
     # 2. Check / Enable WSL & Virtualization Features
     Write-Log -Level STEP -Message "Verifying Windows Subsystem for Linux (WSL) prerequisites..."
@@ -51,15 +64,15 @@ if ($dockerCmd -or (Test-Path $dockerApp)) {
     } else {
         Write-Log -Level WARN -Message "WinGet reported an issue installing Docker Desktop. Trying direct download fallback..."
 
-        # Fallback to direct official installer
+        # Fallback to direct official installer with smart caching
         $installerUrl = "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
-        $tempInstaller = Join-Path -Path $env:TEMP -ChildPath "DockerDesktopInstaller.exe"
+        $cacheDir = Get-DownloadCacheDirectory
+        $targetInstaller = Join-Path -Path $cacheDir -ChildPath "DockerDesktopInstaller.exe"
         try {
-            Write-Log -Level INFO -Message "Downloading Docker Desktop directly from official CDN: $installerUrl"
-            Invoke-WebRequest -Uri $installerUrl -OutFile $tempInstaller -UseBasicParsing
+            $downloadedInstaller = Get-CachedOrDownloadFile -ToolId "docker" -Url $installerUrl -DestinationPath $targetInstaller -DisplayName "Docker Desktop Installer" -AlternativePatterns @("*DockerDesktopInstaller*.exe", "*docker*installer*.exe")
 
             Write-Log -Level INFO -Message "Running Docker installer in silent mode..."
-            $p = Start-Process -FilePath $tempInstaller -ArgumentList "install --quiet --accept-license" -Wait -PassThru
+            $p = Start-Process -FilePath $downloadedInstaller -ArgumentList "install --quiet --accept-license" -Wait -PassThru
             if ($p.ExitCode -eq 0 -or $p.ExitCode -eq 3010) {
                 Write-Log -Level SUCCESS -Message "Docker Desktop direct install succeeded."
             } else {
@@ -67,8 +80,6 @@ if ($dockerCmd -or (Test-Path $dockerApp)) {
             }
         } catch {
             Write-Log -Level ERROR -Message "Direct Docker install encountered error: $_"
-        } finally {
-            Remove-Item -Path $tempInstaller -Force -ErrorAction SilentlyContinue
         }
     }
 }

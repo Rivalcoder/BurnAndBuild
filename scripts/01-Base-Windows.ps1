@@ -7,7 +7,19 @@ param(
     [string]$ConfigPath = "$PSScriptRoot\..\config.json"
 )
 
-$modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "..\modules"
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
+
+if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
+    $cand = Join-Path -Path $scriptDir -ChildPath "..\config.json"
+    if (Test-Path $cand) {
+        $ConfigPath = (Resolve-Path $cand).Path
+    } elseif (Test-Path (Join-Path -Path (Get-Location).Path -ChildPath "config.json")) {
+        $ConfigPath = (Resolve-Path "config.json").Path
+    }
+}
+
+$modulesPath = Join-Path -Path $scriptDir -ChildPath "..\modules"
 if (-not (Get-Command "Write-Log" -ErrorAction SilentlyContinue)) {
     Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
 }
@@ -117,5 +129,13 @@ if ($config.settings.showFileExtensions -or $config.settings.showHiddenFiles) {
         Write-Log -Level SUCCESS -Message "File extensions and hidden files set to visible."
     }
 }
+
+# 8. WinGet Configuration Tweaks
+try {
+    if (Get-Command "winget.exe" -ErrorAction SilentlyContinue) {
+        & winget settings --enable LocalManifestFiles 2>$null | Out-Null
+        Write-Log -Level SUCCESS -Message "WinGet LocalManifestFiles enabled for offline/manifest installation support."
+    }
+} catch {}
 
 Write-Log -Level SUCCESS -Message "Base Windows configuration completed successfully."

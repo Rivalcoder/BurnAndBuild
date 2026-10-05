@@ -1,5 +1,6 @@
 # scripts/05-Flutter-SDK.ps1
-# Automates Flutter SDK installation, PATH configuration, Android linking, and flutter doctor verification
+# Automates Flutter SDK installation, PATH configuration, Android linking, precaching, and flutter doctor verification
+# Optimized with live progress streaming, 7-Zip acceleration, and non-blocking precache monitoring
 
 [CmdletBinding()]
 param(
@@ -10,13 +11,33 @@ param(
     [switch]$SkipPrecache
 )
 
-$modulesPath = Join-Path -Path $PSScriptRoot -ChildPath "..\modules"
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
+
+if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
+    $cand = Join-Path -Path $scriptDir -ChildPath "..\config.json"
+    if (Test-Path $cand) {
+        $ConfigPath = (Resolve-Path $cand).Path
+    } elseif (Test-Path (Join-Path -Path (Get-Location).Path -ChildPath "config.json")) {
+        $ConfigPath = (Resolve-Path "config.json").Path
+    }
+}
+
+$modulesPath = Join-Path -Path $scriptDir -ChildPath "..\modules"
 if (-not (Get-Command "Write-Log" -ErrorAction SilentlyContinue)) {
     Import-Module (Join-Path -Path $modulesPath -ChildPath "Logging.psm1") -Global -DisableNameChecking
 }
 Import-Module (Join-Path -Path $modulesPath -ChildPath "Environment.psm1") -DisableNameChecking
+Import-Module (Join-Path -Path $modulesPath -ChildPath "DownloadManager.psm1") -DisableNameChecking
+if (Test-Path (Join-Path -Path $modulesPath -ChildPath "UIProgress.psm1")) {
+    Import-Module (Join-Path -Path $modulesPath -ChildPath "UIProgress.psm1") -DisableNameChecking
+}
 
-Write-LogHeader "Phase 5: Flutter Multiplatform SDK Automation"
+Write-LogHeader "Mobile SDK: Flutter Multiplatform Framework"
+
+if (Get-Command "Write-LiveToolStatus" -ErrorAction SilentlyContinue) {
+    Write-LiveToolStatus -ToolId "flutter" -Status "Running" -DisplayName "Flutter SDK" -Detail "Configuring Flutter engine and SDK tooling"
+}
 
 # Load Configuration
 $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
@@ -58,56 +79,91 @@ if (-not $isInstalled) {
     Write-Log -Level STEP -Message "Installing Flutter SDK to $flutterDir..."
 
     $installedViaGit = $false
-    # Method A: Git Clone (Fastest, cleanest, and officially recommended)
     $gitCmd = Get-Command "git.exe" -ErrorAction SilentlyContinue
     if (-not $gitCmd -and (Test-Path "C:\Program Files\Git\cmd\git.exe")) {
         $gitCmd = "C:\Program Files\Git\cmd\git.exe"
     }
 
+    # Method A: Git Clone with Live Progress Streaming
     if ($gitCmd) {
-        Write-Log -Level INFO -Message "Cloning Flutter stable branch via Git..."
+        Write-Log -Level INFO -Message "Cloning Flutter stable branch via Git with live progress..."
         try {
             $branch = if ($config.flutterSdk.gitBranch) { $config.flutterSdk.gitBranch } else { "stable" }
             $repoUrl = if ($config.flutterSdk.gitRepoUrl) { $config.flutterSdk.gitRepoUrl } else { "https://github.com/flutter/flutter.git" }
 
-            & $gitCmd clone --depth 1 -b $branch $repoUrl $flutterDir
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = $gitCmd
+            $psi.Arguments = "clone --depth 1 -b $branch --progress $repoUrl `"$flutterDir`""
+            $psi.UseShellExecute = $false
+            $psi.RedirectStandardError = $true
+            $psi.CreateNoWindow = $true
+
+            $proc = [System.Diagnostics.Process]::Start($psi)
+            while (-not $proc.StandardError.EndOfStream) {
+                $errLine = $proc.StandardError.ReadLine()
+                if ($errLine -match "Receiving objects:\s+(\d+)%") {
+                    Write-Host -NoNewline "`r  [CLONING FLUTTER] $($Matches[1])% received...   "
+                } elseif ($errLine -match "Resolving deltas:\s+(\d+)%") {
+                    Write-Host -NoNewline "`r  [RESOLVING DELTAS] $($Matches[1])% completed...   "
+                }
+            }
+            $proc.WaitForExit()
+            Write-Host ""
+
             if (Test-Path $flutterBat) {
                 Write-Log -Level SUCCESS -Message "Flutter successfully cloned from GitHub."
                 $installedViaGit = $true
             }
         } catch {
-            Write-Log -Level WARN -Message "Git clone failed: $_. Attempting archive download fallback..."
+            Write-Log -Level WARN -Message "Git clone failed: $_. Attempting archive fallback..."
         }
     }
 
-    # Method B: Official Archive Download Fallback
+    # Method B: Official Archive Download Fallback with 7-Zip & Smart Cache Search
     if (-not $installedViaGit) {
-        Write-Log -Level INFO -Message "Querying official Flutter releases manifest..."
-        $releasesUrl = "https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json"
-        $tempZip = Join-Path -Path $env:TEMP -ChildPath "flutter-sdk.zip"
+        $cacheDir = Get-DownloadCacheDirectory
+        $targetZip = Join-Path -Path $cacheDir -ChildPath "flutter-sdk.zip"
+
+        # Check if pre-downloaded archive already exists in cache or Downloads
+        $existingZip = Find-PreDownloadedArchive -FileName "flutter-sdk.zip" -AlternativePatterns @("*flutter*windows*.zip") -MinSizeBytes 50000000
+
+        if ($existingZip) {
+            Write-Log -Level SUCCESS -Message "Found existing Flutter archive at '$existingZip'. Skipping download!"
+            $downloadedFile = $existingZip
+        } else {
+            Write-Log -Level INFO -Message "Querying official Flutter releases manifest..."
+            $releasesUrl = "https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json"
+
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                $manifest = Invoke-RestMethod -Uri $releasesUrl -UseBasicParsing
+                $stableHash = $manifest.current_release.stable
+                $relEntry = $manifest.releases | Where-Object { $_.hash -eq $stableHash } | Select-Object -First 1
+
+                if (-not $relEntry) {
+                    $relEntry = $manifest.releases | Where-Object { $_.channel -eq "stable" } | Select-Object -First 1
+                }
+
+                $downloadUrl = "https://storage.googleapis.com/flutter_infra_release/releases/$($relEntry.archive)"
+                $downloadedFile = Get-CachedOrDownloadFile -ToolId "flutter" -Url $downloadUrl -DestinationPath $targetZip -DisplayName "Flutter SDK ($($relEntry.version))" -AlternativePatterns @("*flutter*windows*.zip")
+            } catch {
+                Write-Log -Level ERROR -Message "Failed to acquire Flutter archive: $_"
+                throw $_
+            }
+        }
 
         try {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            $manifest = Invoke-RestMethod -Uri $releasesUrl -UseBasicParsing
-            $stableHash = $manifest.current_release.stable
-            $relEntry = $manifest.releases | Where-Object { $_.hash -eq $stableHash } | Select-Object -First 1
-
-            if (-not $relEntry) {
-                $relEntry = $manifest.releases | Where-Object { $_.channel -eq "stable" } | Select-Object -First 1
+            Write-Log -Level INFO -Message "Extracting Flutter SDK to $parentDir..."
+            $sevenZip = "C:\Program Files\7-Zip\7z.exe"
+            if (Test-Path $sevenZip) {
+                & $sevenZip x -y -o"$parentDir" "$downloadedFile" | Out-Null
+            } else {
+                Expand-Archive -Path $downloadedFile -DestinationPath $parentDir -Force
             }
 
-            $downloadUrl = "https://storage.googleapis.com/flutter_infra_release/releases/$($relEntry.archive)"
-            Write-Log -Level INFO -Message "Downloading Flutter $($relEntry.version) from: $downloadUrl"
-
-            Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing
-
-            Write-Log -Level INFO -Message "Extracting Flutter SDK to $parentDir..."
-            Expand-Archive -Path $tempZip -DestinationPath $parentDir -Force
-
-            Remove-Item -Path $tempZip -Force -ErrorAction SilentlyContinue
             Write-Log -Level SUCCESS -Message "Flutter archive extracted successfully."
         } catch {
-            Write-Log -Level ERROR -Message "Failed to download/extract Flutter archive: $_"
+            Write-Log -Level ERROR -Message "Failed to extract Flutter archive: $_"
             throw $_
         }
     }
@@ -123,13 +179,11 @@ Refresh-SessionEnvironment
 if (Test-Path $flutterBat) {
     Write-Log -Level STEP -Message "Configuring Flutter settings and tool integration..."
 
-    # Disable Google analytics/telemetry for CI and speed
+    # Disable analytics immediately
     try {
         & "$flutterBat" config --no-analytics | Out-Null
         Write-Log -Level SUCCESS -Message "Disabled Flutter analytics."
-    } catch {
-        Write-Log -Level WARN -Message "Could not configure flutter analytics: $_"
-    }
+    } catch {}
 
     # Link Android SDK if present
     $androidSdk = $env:ANDROID_HOME
@@ -142,9 +196,7 @@ if (Test-Path $flutterBat) {
         try {
             & "$flutterBat" config --android-sdk "$androidSdk" | Out-Null
             Write-Log -Level SUCCESS -Message "Linked Android SDK with Flutter."
-        } catch {
-            Write-Log -Level WARN -Message "Failed linking Android SDK to Flutter: $_"
-        }
+        } catch {}
     }
 
     # Link Java JDK if present
@@ -154,33 +206,58 @@ if (Test-Path $flutterBat) {
         try {
             & "$flutterBat" config --jdk-dir "$javaHome" | Out-Null
             Write-Log -Level SUCCESS -Message "Linked Java JDK with Flutter."
-        } catch {
-            Write-Log -Level WARN -Message "Failed linking Java JDK to Flutter: $_"
-        }
+        } catch {}
     }
 
-    # Precache engine and platform artifacts
+    # Precache engine and platform artifacts (With Live Streaming, No Out-Null Blocking!)
     if (-not $SkipPrecache) {
-        Write-Log -Level INFO -Message "Pre-caching Flutter engine artifacts (Windows & Web)..."
-        try {
-            & "$flutterBat" precache --windows --web --no-ios | Out-Null
-            Write-Log -Level SUCCESS -Message "Flutter precache completed."
-        } catch {
-            Write-Log -Level WARN -Message "Flutter precache warning: $_"
+        $engineArtifactsDir = Join-Path -Path $flutterDir -ChildPath "bin\cache\artifacts\engine"
+        $isPrecached = (Test-Path $engineArtifactsDir) -and ((Get-ChildItem -Path $engineArtifactsDir -Recurse -File -ErrorAction SilentlyContinue).Count -gt 5)
+
+        if ($isPrecached) {
+            Write-Log -Level SUCCESS -Message "Flutter engine cache artifacts already found on disk. Skipping precache download."
+        } else {
+            Write-Log -Level INFO -Message "Pre-caching Flutter engine artifacts (Windows & Web) with live updates..."
+            try {
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = "cmd.exe"
+                $psi.Arguments = "/c `"$flutterBat`" precache --windows --web --no-ios"
+                $psi.UseShellExecute = $false
+                $psi.RedirectStandardOutput = $true
+                $psi.CreateNoWindow = $true
+
+                $proc = [System.Diagnostics.Process]::Start($psi)
+                while (-not $proc.StandardOutput.EndOfStream) {
+                    $line = $proc.StandardOutput.ReadLine()
+                    if ($line) {
+                        Write-Host "  [FLUTTER] $line" -ForegroundColor DarkCyan
+                    }
+                }
+                $proc.WaitForExit()
+                Write-Log -Level SUCCESS -Message "Flutter precache completed."
+            } catch {
+                Write-Log -Level WARN -Message "Flutter precache warning: $_"
+            }
         }
     }
 
-    # Run doctor to verify health
+    # Run doctor summary
     Write-Log -Level INFO -Message "Executing flutter doctor summary..."
     try {
-        $doc = & "$flutterBat" doctor -v 2>&1
-        $summary = $doc | Select-Object -First 6
+        $doc = & "$flutterBat" doctor 2>&1
+        $summary = $doc | Select-Object -First 5
         Write-Log -Level INFO -Message ($summary -join "`n")
-    } catch {
-        Write-Log -Level WARN -Message "flutter doctor encountered an issue: $_"
+    } catch {}
+
+    $flutterVer = & "$flutterBat" --version 2>$null | Select-Object -First 1
+    if (Get-Command "Write-LiveToolStatus" -ErrorAction SilentlyContinue) {
+        Write-LiveToolStatus -ToolId "flutter" -Status "Success" -DisplayName "Flutter SDK" -Detail "$flutterVer ($flutterDir)"
     }
 } else {
     Write-Log -Level ERROR -Message "flutter.bat was not found at expected path: $flutterBat"
+    if (Get-Command "Write-LiveToolStatus" -ErrorAction SilentlyContinue) {
+        Write-LiveToolStatus -ToolId "flutter" -Status "Failed" -DisplayName "Flutter SDK" -Detail "flutter.bat not found"
+    }
 }
 
 Refresh-SessionEnvironment

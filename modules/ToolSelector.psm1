@@ -107,15 +107,36 @@ function Show-ToolSelectionGui {
         </Border>
 
         <!-- Presets Bar -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
-            <TextBlock Text="Presets:" VerticalAlignment="Center" Foreground="#94A3B8" FontWeight="Bold" FontSize="12" Margin="0,0,8,0"/>
-            <Button Name="BtnPresetAi" Content="AI &amp; Agents" Background="#1E293B" Foreground="#C084FC" BorderBrush="#A855F7" Margin="0,0,6,0"/>
-            <Button Name="BtnPresetMobile" Content="Mobile / Flutter" Background="#1E293B" Foreground="#FBBF24" BorderBrush="#F59E0B" Margin="0,0,6,0"/>
-            <Button Name="BtnPresetWeb" Content="Full-Stack Web" Background="#1E293B" Foreground="#60A5FA" BorderBrush="#3B82F6" Margin="0,0,6,0"/>
-            <Button Name="BtnPresetDevops" Content="Docker &amp; DevOps" Background="#1E293B" Foreground="#2DD4BF" BorderBrush="#0D9488" Margin="0,0,6,0"/>
-            <Button Name="BtnSelectAll" Content="Select All" Background="#1E293B" Foreground="#4ADE80" BorderBrush="#22C55E" Margin="0,0,6,0"/>
-            <Button Name="BtnClearAll" Content="Clear All" Background="#1E293B" Foreground="#94A3B8" BorderBrush="#64748B"/>
-        </StackPanel>
+        <!-- Presets and Filter Bar -->
+        <Border Grid.Row="1" Background="#1E293B" CornerRadius="8" Padding="12,8" Margin="0,0,0,10" BorderBrush="#334155" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="180"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Quick Selection & Presets -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Quick:" VerticalAlignment="Center" Foreground="#94A3B8" FontWeight="Bold" FontSize="11.5" Margin="0,0,6,0"/>
+                    <Button Name="BtnSelectAll" Content="✓ Select All" Background="#0F172A" Foreground="#4ADE80" BorderBrush="#22C55E" FontWeight="SemiBold" Margin="0,0,5,0" Padding="10,4"/>
+                    <Button Name="BtnDeselectAll" Content="✕ Deselect All" Background="#0F172A" Foreground="#F87171" BorderBrush="#EF4444" FontWeight="SemiBold" Margin="0,0,10,0" Padding="10,4"/>
+                    <Border Width="1" Height="16" Background="#334155" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Presets:" VerticalAlignment="Center" Foreground="#94A3B8" FontWeight="Bold" FontSize="11.5" Margin="0,0,6,0"/>
+                    <Button Name="BtnPresetAi" Content="AI" Background="#0F172A" Foreground="#C084FC" BorderBrush="#A855F7" Margin="0,0,4,0" Padding="8,4"/>
+                    <Button Name="BtnPresetMobile" Content="Mobile" Background="#0F172A" Foreground="#FBBF24" BorderBrush="#F59E0B" Margin="0,0,4,0" Padding="8,4"/>
+                    <Button Name="BtnPresetWeb" Content="Web" Background="#0F172A" Foreground="#60A5FA" BorderBrush="#3B82F6" Margin="0,0,4,0" Padding="8,4"/>
+                    <Button Name="BtnPresetDevops" Content="DevOps" Background="#0F172A" Foreground="#2DD4BF" BorderBrush="#0D9488" Margin="0,0,4,0" Padding="8,4"/>
+                </StackPanel>
+
+                <!-- Search Filter -->
+                <TextBlock Grid.Column="2" Text="Filter:" VerticalAlignment="Center" Foreground="#94A3B8" FontWeight="Bold" FontSize="11.5" Margin="12,0,6,0"/>
+                <Border Grid.Column="3" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="4" Padding="6,3">
+                    <TextBox Name="TxtFilter" Background="Transparent" Foreground="#F8FAFC" BorderThickness="0" FontSize="11.5" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </Border>
 
         <!-- Checklist Scroll Area -->
         <Border Grid.Row="2" Background="#0F172A" CornerRadius="8" BorderBrush="#334155" BorderThickness="1" Padding="10">
@@ -136,7 +157,7 @@ function Show-ToolSelectionGui {
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="Idempotent: Already installed tools will be verified and safely preserved." FontSize="11" Foreground="#94A3B8"/>
+                    <TextBlock Text="Idempotent: Already installed tools verified. Mobile SDKs scheduled for final phase." FontSize="11" Foreground="#94A3B8"/>
                 </StackPanel>
 
                 <Button Name="BtnCancel" Grid.Column="1" Content="Cancel" Background="#1E293B" Foreground="#F87171"
@@ -159,11 +180,14 @@ function Show-ToolSelectionGui {
     $btnPresetWeb = $window.FindName("BtnPresetWeb")
     $btnPresetDevops = $window.FindName("BtnPresetDevops")
     $btnSelectAll = $window.FindName("BtnSelectAll")
+    $btnDeselectAll = $window.FindName("BtnDeselectAll")
     $btnClearAll = $window.FindName("BtnClearAll")
     $btnStart = $window.FindName("BtnStart")
     $btnCancel = $window.FindName("BtnCancel")
+    $txtFilter = $window.FindName("TxtFilter")
 
     $checkBoxMap = @{}
+    $filterItems = @()
     $categories = $tools | Group-Object -Property category
 
     foreach ($cat in $categories) {
@@ -224,10 +248,15 @@ function Show-ToolSelectionGui {
             $toolStack.Children.Add($cb) | Out-Null
             $toolStack.Children.Add($desc) | Out-Null
 
-            # Tag Badge
+            # Tag Badge (Highlight Mobile Tools to show they install in final phase)
+            $isMobile = ($tool.category -eq "Mobile Development") -or ($tool.id -eq "android") -or ($tool.id -eq "flutter")
+            $badgeBg = if ($isMobile) { "#451A03" } else { "#0F172A" }
+            $badgeBorderColor = if ($isMobile) { "#D97706" } else { "#0284C7" }
+            $badgeTextColor = if ($isMobile) { "#FBBF24" } else { "#38BDF8" }
+
             $badgeBorder = New-Object System.Windows.Controls.Border
-            $badgeBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0F172A")
-            $badgeBorder.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0284C7")
+            $badgeBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString($badgeBg)
+            $badgeBorder.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString($badgeBorderColor)
             $badgeBorder.BorderThickness = New-Object System.Windows.Thickness(1)
             $badgeBorder.CornerRadius = New-Object System.Windows.CornerRadius(4)
             $badgeBorder.Padding = New-Object System.Windows.Thickness(8, 3, 8, 3)
@@ -235,10 +264,10 @@ function Show-ToolSelectionGui {
             [System.Windows.Controls.Grid]::SetColumn($badgeBorder, 1)
 
             $badgeText = New-Object System.Windows.Controls.TextBlock
-            $badgeText.Text = if ($tool.tag) { $tool.tag } else { "Tool" }
+            $badgeText.Text = if ($isMobile) { "$($tool.tag) [LAST]" } elseif ($tool.tag) { $tool.tag } else { "Tool" }
             $badgeText.FontSize = 10.5
             $badgeText.FontWeight = [System.Windows.FontWeights]::SemiBold
-            $badgeText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
+            $badgeText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString($badgeTextColor)
             $badgeBorder.Child = $badgeText
 
             $cardGrid.Children.Add($toolStack) | Out-Null
@@ -248,7 +277,22 @@ function Show-ToolSelectionGui {
             $pnlCategories.Children.Add($card) | Out-Null
 
             $checkBoxMap[$tool.id] = $cb
+            $filterItems += @{ Card = $card; Tool = $tool }
         }
+    }
+
+    # Hook up live search filter
+    if ($txtFilter) {
+        $txtFilter.Add_TextChanged({
+            $query = $txtFilter.Text.Trim().ToLower()
+            foreach ($item in $filterItems) {
+                if (-not $query -or $item.Tool.name.ToLower().Contains($query) -or $item.Tool.id.ToLower().Contains($query) -or $item.Tool.description.ToLower().Contains($query)) {
+                    $item.Card.Visibility = [System.Windows.Visibility]::Visible
+                } else {
+                    $item.Card.Visibility = [System.Windows.Visibility]::Collapsed
+                }
+            }
+        })
     }
 
     # Helper function to update count
@@ -316,19 +360,46 @@ function Show-ToolSelectionGui {
         & $applyPreset $presets.devops
     })
 
-    $btnSelectAll.Add_Click({
-        foreach ($k in $checkBoxMap.Keys) {
-            $checkBoxMap[$k].IsChecked = $true
-        }
-        & $updateCount
-    })
+    if ($btnSelectAll) {
+        $btnSelectAll.Add_Click({
+            $filterText = if ($txtFilter) { $txtFilter.Text.Trim() } else { "" }
+            if ($filterText) {
+                foreach ($item in $filterItems) {
+                    if ($item.Card.Visibility -eq [System.Windows.Visibility]::Visible) {
+                        $checkBoxMap[$item.Tool.id].IsChecked = $true
+                    }
+                }
+            } else {
+                foreach ($k in $checkBoxMap.Keys) {
+                    $checkBoxMap[$k].IsChecked = $true
+                }
+            }
+            & $updateCount
+        })
+    }
 
-    $btnClearAll.Add_Click({
-        foreach ($k in $checkBoxMap.Keys) {
-            $checkBoxMap[$k].IsChecked = $false
+    $deselectAction = {
+        $filterText = if ($txtFilter) { $txtFilter.Text.Trim() } else { "" }
+        if ($filterText) {
+            foreach ($item in $filterItems) {
+                if ($item.Card.Visibility -eq [System.Windows.Visibility]::Visible) {
+                    $checkBoxMap[$item.Tool.id].IsChecked = $false
+                }
+            }
+        } else {
+            foreach ($k in $checkBoxMap.Keys) {
+                $checkBoxMap[$k].IsChecked = $false
+            }
         }
         & $updateCount
-    })
+    }
+
+    if ($btnDeselectAll) {
+        $btnDeselectAll.Add_Click($deselectAction)
+    }
+    if ($btnClearAll) {
+        $btnClearAll.Add_Click($deselectAction)
+    }
 
     $script:guiResult = $null
 
@@ -399,25 +470,33 @@ function Show-ToolSelectionCli {
             Write-Host "  [$num] " -NoNewline -ForegroundColor Cyan
             Write-Host "$box " -NoNewline -ForegroundColor $boxColor
             Write-Host "$($t.name.PadRight(30)) " -NoNewline -ForegroundColor $nameColor
-            Write-Host "($($t.category))" -ForegroundColor DarkCyan
+            Write-Host "($($t.category))" -NoNewline -ForegroundColor DarkCyan
+            if ($t.category -eq "Mobile Development" -or $t.id -eq "android" -or $t.id -eq "flutter") {
+                Write-Host " [Installs Last]" -ForegroundColor DarkYellow
+            } else {
+                Write-Host ""
+            }
             Write-Host "       $($t.description)" -ForegroundColor DarkGray
         }
 
         $selectedCount = ($selectedMap.Values | Where-Object { $_ -eq $true }).Count
         Write-Host "`n--------------------------------------------------------------------------------" -ForegroundColor Cyan
-        Write-Host " Selected: $selectedCount of $($tools.Count) tools" -ForegroundColor Yellow
-        Write-Host " Presets : [AI] AI & Agents  [M] Mobile  [W] Web  [D] DevOps  [A] All  [C] Clear" -ForegroundColor DarkYellow
-        Write-Host " Actions : [Enter] START INSTALLATION   [Q] Quit / Cancel" -ForegroundColor Green
+        Write-Host " Selected : $selectedCount of $($tools.Count) tools" -ForegroundColor $(if ($selectedCount -gt 0) { "Green" } else { "Yellow" })
+        Write-Host " Quick    : [A] Select All          [D] Deselect All (Clear)" -ForegroundColor Cyan
+        Write-Host " Presets  : [AI] AI & Agents   [M] Mobile   [W] Web   [DEV] DevOps" -ForegroundColor DarkYellow
+        Write-Host " Note     : Mobile SDKs are downloaded in parallel & installed in the final phase." -ForegroundColor DarkGray
+        Write-Host " Actions  : [Enter] START INSTALLATION   [Q] Quit / Cancel" -ForegroundColor Green
         Write-Host "--------------------------------------------------------------------------------" -ForegroundColor Cyan
-        Write-Host -NoNewline "Command / Numbers to toggle (e.g. '1,4,7' or 'AI'): "
+        Write-Host -NoNewline "Command / Numbers to toggle (e.g. '1,4,7' or 'A' or 'D'): "
 
         $input = Read-Host
         if ($null -eq $input) { $input = "" }
         $input = $input.Trim()
+        $cmd = $input.ToLower()
 
-        if ($input -eq "" -or $input.ToLower() -eq "start") {
+        if ($cmd -eq "" -or $cmd -eq "start") {
             $chosen = @()
-            foreach ($k in $selectedMap.Keys) {
+            foreach ($k in @($selectedMap.Keys)) {
                 if ($selectedMap[$k]) { $chosen += $k }
             }
             if ($chosen.Count -eq 0) {
@@ -428,44 +507,46 @@ function Show-ToolSelectionCli {
             return $chosen
         }
 
-        if ($input.ToLower() -eq "q" -or $input.ToLower() -eq "exit") {
+        if ($cmd -eq "q" -or $cmd -eq "exit") {
             Write-Host "`nSetup cancelled by user." -ForegroundColor Yellow
             return $null
         }
 
-        if ($input.ToLower() -eq "a" -or $input.ToLower() -eq "all") {
-            foreach ($k in $selectedMap.Keys) { $selectedMap[$k] = $true }
+        # Select All
+        if ($cmd -eq "a" -or $cmd -eq "all" -or $cmd -eq "select all" -or $cmd -eq "selectall" -or $cmd -eq "sa") {
+            foreach ($k in @($selectedMap.Keys)) { $selectedMap[$k] = $true }
             continue
         }
 
-        if ($input.ToLower() -eq "c" -or $input.ToLower() -eq "clear") {
-            foreach ($k in $selectedMap.Keys) { $selectedMap[$k] = $false }
+        # Deselect All
+        if ($cmd -eq "d" -or $cmd -eq "da" -or $cmd -eq "c" -or $cmd -eq "clear" -or $cmd -eq "none" -or $cmd -eq "deselect" -or $cmd -eq "deselect all" -or $cmd -eq "deselectall") {
+            foreach ($k in @($selectedMap.Keys)) { $selectedMap[$k] = $false }
             continue
         }
 
-        if ($input.ToLower() -eq "ai") {
-            foreach ($k in $selectedMap.Keys) {
+        if ($cmd -eq "ai") {
+            foreach ($k in @($selectedMap.Keys)) {
                 $selectedMap[$k] = ($presets.ai -contains $k)
             }
             continue
         }
 
-        if ($input.ToLower() -eq "m" -or $input.ToLower() -eq "mobile") {
-            foreach ($k in $selectedMap.Keys) {
+        if ($cmd -eq "m" -or $cmd -eq "mobile") {
+            foreach ($k in @($selectedMap.Keys)) {
                 $selectedMap[$k] = ($presets.mobile -contains $k)
             }
             continue
         }
 
-        if ($input.ToLower() -eq "w" -or $input.ToLower() -eq "web") {
-            foreach ($k in $selectedMap.Keys) {
+        if ($cmd -eq "w" -or $cmd -eq "web") {
+            foreach ($k in @($selectedMap.Keys)) {
                 $selectedMap[$k] = ($presets.web -contains $k)
             }
             continue
         }
 
-        if ($input.ToLower() -eq "d" -or $input.ToLower() -eq "devops") {
-            foreach ($k in $selectedMap.Keys) {
+        if ($cmd -eq "dev" -or $cmd -eq "devops") {
+            foreach ($k in @($selectedMap.Keys)) {
                 $selectedMap[$k] = ($presets.devops -contains $k)
             }
             continue

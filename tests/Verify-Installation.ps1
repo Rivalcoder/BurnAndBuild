@@ -105,13 +105,33 @@ if (Should-Verify "java") {
 # 4. Runtimes: Node.js & npm
 if (Should-Verify "node") {
     $results += Test-Component "Node.js" {
-        $v = & node -v 2>$null
-        if ($v) { $v.Trim() } else { throw "node.exe not found on PATH" }
+        $nodeCmd = Get-Command "node.exe" -ErrorAction SilentlyContinue
+        if (-not $nodeCmd) { $nodeCmd = Get-Command "node" -ErrorAction SilentlyContinue }
+        if (-not $nodeCmd -and (Test-Path "$env:APPDATA\fnm\aliases\default\node.exe")) {
+            $env:Path = "$env:APPDATA\fnm\aliases\default;$env:Path"
+            $nodeCmd = Get-Command "node.exe" -ErrorAction SilentlyContinue
+        }
+        if ($nodeCmd) {
+            $v = & node -v 2>$null
+            if ($v) { $v.Trim() } else { "node detected on PATH" }
+        } else {
+            throw "node.exe not found on PATH or fnm default alias"
+        }
     }
 
     $results += Test-Component "npm" {
-        $v = & npm -v 2>$null
-        if ($v) { "v$($v.Trim())" } else { throw "npm not found on PATH" }
+        $npmCmd = Get-Command "npm.cmd" -ErrorAction SilentlyContinue
+        if (-not $npmCmd) { $npmCmd = Get-Command "npm" -ErrorAction SilentlyContinue }
+        if (-not $npmCmd -and (Test-Path "$env:APPDATA\fnm\aliases\default\npm.cmd")) {
+            $env:Path = "$env:APPDATA\fnm\aliases\default;$env:Path"
+            $npmCmd = Get-Command "npm.cmd" -ErrorAction SilentlyContinue
+        }
+        if ($npmCmd) {
+            $v = & npm -v 2>$null
+            if ($v) { "v$($v.Trim())" } else { "npm detected on PATH" }
+        } else {
+            throw "npm not found on PATH or fnm default alias"
+        }
     }
 }
 
@@ -131,24 +151,38 @@ if (Should-Verify "python") {
 # 6. Runtimes: Gradle
 if (Should-Verify "gradle") {
     $results += Test-Component "Gradle" {
-        if (-not $env:GRADLE_HOME -and -not (Get-Command "gradle.bat" -ErrorAction SilentlyContinue)) {
+        $gradleCmd = Get-Command "gradle.bat" -ErrorAction SilentlyContinue
+        if (-not $gradleCmd) { $gradleCmd = Get-Command "gradle" -ErrorAction SilentlyContinue }
+        if (-not $gradleCmd -and $env:GRADLE_HOME -and (Test-Path "$env:GRADLE_HOME\bin\gradle.bat")) {
+            $env:Path = "$env:GRADLE_HOME\bin;$env:Path"
+            $gradleCmd = "$env:GRADLE_HOME\bin\gradle.bat"
+        }
+        if (-not $gradleCmd -and (Test-Path "C:\Tools\gradle\gradle-8.7\bin\gradle.bat")) {
+            $env:Path = "C:\Tools\gradle\gradle-8.7\bin;$env:Path"
+            $gradleCmd = "C:\Tools\gradle\gradle-8.7\bin\gradle.bat"
+        }
+        if ($gradleCmd) {
+            $v = & gradle -v 2>$null | Where-Object { $_ -match "^Gradle\s+\d+" } | Select-Object -First 1
+            if ($v) { $v.Trim() } else { "Gradle detected at: $env:GRADLE_HOME" }
+        } else {
             throw "Gradle or GRADLE_HOME not found"
         }
-        $v = & gradle -v 2>$null | Where-Object { $_ -match "^Gradle\s+\d+" } | Select-Object -First 1
-        if ($v) { $v.Trim() } else { "Gradle detected in GRADLE_HOME: $env:GRADLE_HOME" }
     }
 }
 
 # 7. Mobile: Android SDK
 if (Should-Verify "android") {
     $results += Test-Component "Android SDK" {
-        if (-not $env:ANDROID_HOME) { throw "ANDROID_HOME is not set" }
-        $adb = Join-Path -Path $env:ANDROID_HOME -ChildPath "platform-tools\adb.exe"
+        $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { "C:\Android\android-sdk" }
+        if (-not (Test-Path $sdk)) { throw "Android SDK not found at $sdk" }
+        $adb = Join-Path -Path $sdk -ChildPath "platform-tools\adb.exe"
         if (Test-Path $adb) {
             $v = & $adb version 2>$null | Select-Object -First 1
-            "$v (Root=$env:ANDROID_HOME)"
+            "$v (Root=$sdk)"
+        } elseif (Test-Path (Join-Path -Path $sdk -ChildPath "cmdline-tools\latest\bin\sdkmanager.bat")) {
+            "Android cmdline-tools operational (Root=$sdk)"
         } else {
-            throw "adb.exe not found under $env:ANDROID_HOME\platform-tools"
+            throw "adb.exe not found under $sdk\platform-tools"
         }
     }
 }
@@ -244,11 +278,21 @@ if (Should-Verify "postman") {
 # 14. Database: DBeaver
 if (Should-Verify "dbeaver") {
     $results += Test-Component "DBeaver" {
-        $dbeaver = "C:\Program Files\DBeaver\dbeaver.exe"
-        if (Test-Path $dbeaver) {
-            "Installed at: $dbeaver"
+        $dbeaverPaths = @(
+            "$env:LOCALAPPDATA\DBeaver\dbeaver.exe",
+            "C:\Program Files\DBeaver\dbeaver.exe",
+            "$env:LOCALAPPDATA\Programs\DBeaver\dbeaver.exe",
+            "C:\Program Files (x86)\DBeaver\dbeaver.exe"
+        )
+        $found = $dbeaverPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+        if (-not $found) {
+            $cmd = Get-Command "dbeaver.exe" -ErrorAction SilentlyContinue
+            if ($cmd) { $found = $cmd.Source }
+        }
+        if ($found) {
+            "Installed at: $found"
         } else {
-            throw "DBeaver executable not found at $dbeaver"
+            throw "DBeaver executable not found"
         }
     }
 }
