@@ -114,7 +114,7 @@ When a new tool is needed (e.g., adding Docker Desktop or upgrading Java 17 to J
 ```mermaid
 flowchart LR
     A["Spin Up Staging VM from Current Image"] --> B["Git Pull Automation Repo"]
-    B --> C["Update config.json"]
+    B --> C["Update config/config.json"]
     C --> D["Run ./Start-Windows.bat"]
     D --> E["Run ./tests/Verify-Installation.ps1"]
     E --> F["Capture New Image (v1.1.0)"]
@@ -123,7 +123,7 @@ flowchart LR
 
 1. **Deploy temporary VM** from existing Golden Image `v1.0`.
 2. Open PowerShell in repo folder and run `git pull`.
-3. Modify `config.json` with the new tool/version.
+3. Modify `config/config.json` with the new tool/version.
 4. Execute `.\Start-Windows.bat` (or `.\scripts\bootstrap.ps1`).
 5. Run `.\tests\Verify-Installation.ps1` to confirm health.
 6. Clean temporary files:
