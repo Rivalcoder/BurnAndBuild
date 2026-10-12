@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Resolve repository root directory and scripts directory robustly
-if [ -f "$SCRIPT_DIR/config.json" ]; then
+if [ -f "$SCRIPT_DIR/config/config.json" ] || [ -f "$SCRIPT_DIR/config.json" ]; then
     ROOT_DIR="$SCRIPT_DIR"
     LINUX_SCRIPTS_DIR="$ROOT_DIR/scripts/linux"
 else
@@ -79,7 +79,12 @@ NO_GUI=0
 BASE_ONLY=0
 GIT_NAME=""
 GIT_EMAIL=""
-CONFIG_PATH="$ROOT_DIR/config.json"
+CONFIG_PATH=""
+if [ -f "$ROOT_DIR/config/config.json" ]; then
+    CONFIG_PATH="$ROOT_DIR/config/config.json"
+else
+    CONFIG_PATH="$ROOT_DIR/config.json"
+fi
 
 show_help() {
     cat << EOF

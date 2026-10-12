@@ -74,7 +74,8 @@ When executed, BurnAndBuild **interactively asks which tools you want to install
 BurnAndBuild/
 ├── Start-Windows.bat             # Primary Windows one-click launcher (Auto-Admin)
 ├── Start-Linux.sh                # Primary Linux one-click launcher (Auto-Sudo & TUI)
-├── config.json                   # Cross-platform package catalog, URLs & presets
+├── config/
+│   └── config.json               # Cross-platform package catalog, URLs & presets
 ├── modules/
 │   ├── ToolSelector.psm1         # Windows: Modern WPF GUI & interactive CLI engine
 │   ├── Logging.psm1              # Windows: Color logger & persistent file logs

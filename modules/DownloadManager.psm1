@@ -87,8 +87,17 @@ function Start-ParallelPreDownload {
         [string[]]$SelectedTools,
 
         [Parameter(Mandatory = $false)]
-        [string]$ConfigPath = "$PSScriptRoot\..\config.json"
+        [string]$ConfigPath = ""
     )
+
+    if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
+        $parent = if ($PSScriptRoot) { Split-Path -Path $PSScriptRoot -Parent } else { (Get-Location).Path }
+        if (Test-Path (Join-Path -Path $parent -ChildPath "config\config.json")) {
+            $ConfigPath = Join-Path -Path $parent -ChildPath "config\config.json"
+        } else {
+            $ConfigPath = Join-Path -Path $parent -ChildPath "config.json"
+        }
+    }
 
     $cacheDir = Get-DownloadCacheDirectory
     $curlPath = Get-Command "curl.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1

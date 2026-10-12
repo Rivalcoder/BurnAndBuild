@@ -1,15 +1,21 @@
 <#
 .SYNOPSIS
-    BurnAndBuild - Master CLI Entrypoint
+    BurnAndBuild - Master CLI Entrypoint (Windows / PowerShell)
 .DESCRIPTION
     Direct wrapper to bootstrap.ps1 for running BurnAndBuild on Windows and PowerShell Core.
+    Usage:
+      .\scripts\burnandbuild.ps1
+      .\scripts\burnandbuild.ps1 flutter,android
+      .\scripts\burnandbuild.ps1 -Preset ai
+      .\scripts\burnandbuild.ps1 -Full -NoGui
+      .\scripts\burnandbuild.ps1 -BaseOnly
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, Position = 0)]
     [string[]]$Tools = @(),
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, Position = 1)]
     [string]$Preset = "",
 
     [Parameter(Mandatory = $false)]

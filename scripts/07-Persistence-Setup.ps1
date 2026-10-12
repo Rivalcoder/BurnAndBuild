@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$ConfigPath = "$PSScriptRoot\..\config.json",
+    [string]$ConfigPath = "",
 
     [Parameter(Mandatory = $false)]
     [string]$GitUserName = "",

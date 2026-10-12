@@ -22,11 +22,17 @@ function Get-ToolCatalog {
 
     if (-not $ConfigPath) {
         $parent = if ($PSScriptRoot) { Split-Path -Path $PSScriptRoot -Parent } else { (Get-Location).Path }
-        $ConfigPath = Join-Path -Path $parent -ChildPath "config.json"
+        if (Test-Path (Join-Path -Path $parent -ChildPath "config\config.json")) {
+            $ConfigPath = Join-Path -Path $parent -ChildPath "config\config.json"
+        } else {
+            $ConfigPath = Join-Path -Path $parent -ChildPath "config.json"
+        }
     }
 
     if (-not (Test-Path $ConfigPath)) {
-        if (Test-Path "config.json") {
+        if (Test-Path "config\config.json") {
+            $ConfigPath = (Resolve-Path "config\config.json").Path
+        } elseif (Test-Path "config.json") {
             $ConfigPath = (Resolve-Path "config.json").Path
         } else {
             throw "Configuration file not found at: $ConfigPath"
@@ -580,7 +586,7 @@ function Get-SelectedTools {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [string]$ConfigPath = "$PSScriptRoot\..\config.json",
+        [string]$ConfigPath = "",
 
         [Parameter(Mandatory = $false)]
         [string[]]$ExplicitTools = @(),

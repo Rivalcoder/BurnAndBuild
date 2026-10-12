@@ -51,7 +51,10 @@ param(
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
 
-if (Test-Path (Join-Path -Path $scriptDir -ChildPath "config.json")) {
+if (Test-Path (Join-Path -Path $scriptDir -ChildPath "config\config.json")) {
+    $rootDir = $scriptDir
+    $scriptsDir = Join-Path -Path $rootDir -ChildPath "scripts"
+} elseif (Test-Path (Join-Path -Path $scriptDir -ChildPath "config.json")) {
     $rootDir = $scriptDir
     $scriptsDir = Join-Path -Path $rootDir -ChildPath "scripts"
 } else {
@@ -59,7 +62,13 @@ if (Test-Path (Join-Path -Path $scriptDir -ChildPath "config.json")) {
     $scriptsDir = $scriptDir
 }
 
-if (-not $ConfigPath) { $ConfigPath = Join-Path -Path $rootDir -ChildPath "config.json" }
+$defaultConfigPath = if (Test-Path (Join-Path -Path $rootDir -ChildPath "config\config.json")) {
+    Join-Path -Path $rootDir -ChildPath "config\config.json"
+} else {
+    Join-Path -Path $rootDir -ChildPath "config.json"
+}
+
+if (-not $ConfigPath) { $ConfigPath = $defaultConfigPath }
 
 # 1. Administrator Elevation Check & Self-Elevation
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -78,7 +87,7 @@ if (-not $isAdmin) {
     if ($SkipIDEs) { $argList += " -SkipIDEs" }
     if ($GitName) { $argList += " -GitName `"$GitName`"" }
     if ($GitEmail) { $argList += " -GitEmail `"$GitEmail`"" }
-    if ($ConfigPath -ne (Join-Path -Path $rootDir -ChildPath "config.json")) { $argList += " -ConfigPath `"$ConfigPath`"" }
+    if ($ConfigPath -ne $defaultConfigPath) { $argList += " -ConfigPath `"$ConfigPath`"" }
 
     Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $argList
     exit

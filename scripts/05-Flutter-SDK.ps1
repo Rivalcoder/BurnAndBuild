@@ -5,7 +5,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string]$ConfigPath = "$PSScriptRoot\..\config.json",
+    [string]$ConfigPath = "",
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipPrecache
@@ -15,11 +15,17 @@ $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyI
 if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
 
 if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
-    $cand = Join-Path -Path $scriptDir -ChildPath "..\config.json"
-    if (Test-Path $cand) {
-        $ConfigPath = (Resolve-Path $cand).Path
-    } elseif (Test-Path (Join-Path -Path (Get-Location).Path -ChildPath "config.json")) {
-        $ConfigPath = (Resolve-Path "config.json").Path
+    $candidates = @(
+        (Join-Path -Path $scriptDir -ChildPath "..\config\config.json"),
+        (Join-Path -Path $scriptDir -ChildPath "..\config.json"),
+        (Join-Path -Path (Get-Location).Path -ChildPath "config\config.json"),
+        (Join-Path -Path (Get-Location).Path -ChildPath "config.json")
+    )
+    foreach ($cand in $candidates) {
+        if (Test-Path $cand) {
+            $ConfigPath = (Resolve-Path $cand).Path
+            break
+        }
     }
 }
 
