@@ -112,10 +112,11 @@ Set-EnvironmentVariableSafe -Name "ANDROID_HOME" -Value $sdkRoot -Target "Machin
 Set-EnvironmentVariableSafe -Name "ANDROID_SDK_ROOT" -Value $sdkRoot -Target "Machine"
 
 $pathEntries = @(
-    Join-Path -Path $cmdlineLatestDir -ChildPath "bin",
-    Join-Path -Path $sdkRoot -ChildPath "platform-tools",
-    Join-Path -Path $sdkRoot -ChildPath "build-tools\34.0.0",
-    Join-Path -Path $sdkRoot -ChildPath "emulator"
+    (Join-Path -Path $cmdlineLatestDir -ChildPath "bin"),
+    (Join-Path -Path $sdkRoot -ChildPath "platform-tools"),
+    (Join-Path -Path $sdkRoot -ChildPath "build-tools\36.0.0"),
+    (Join-Path -Path $sdkRoot -ChildPath "build-tools\34.0.0"),
+    (Join-Path -Path $sdkRoot -ChildPath "emulator")
 )
 
 foreach ($p in $pathEntries) {
@@ -135,13 +136,15 @@ $licenseHashes = @{
     "android-sdk-license" = @(
         "24333f8a63b1d7f28fe163c7264e9a0f3d20d34d",
         "8933bad161af4178b1185d1a37fbf41ea5269c55",
-        "d56f5187479451eabf01fb78af6dfcb131a6481e"
+        "d56f5187479451eabf01fb78af6dfcb131a6481e",
+        "24333f8a63b6825ea9c5514f83c2829b004d1fee"
     );
     "android-sdk-preview-license" = @(
         "84831b9409646a918e30573bab4c9c91346d8abd"
     );
     "android-sdk-arm-dbt-license" = @(
-        "859f317696f67be3ad891e4a682b1309f58c7042"
+        "859f317696f67be3ad891e4a682b1309f58c7042",
+        "859f317696f67ef3d7f30a50a5560e7834b43903"
     );
     "intel-android-extra-license" = @(
         "d975f751698a77b662f1254ddbeed3901e976f5a"
@@ -149,8 +152,21 @@ $licenseHashes = @{
     "mips-android-extra-license" = @(
         "e9acab5b5fbb560a72cfa4f604b90c84967d23bc"
     );
+    "mips-android-sysimage-license" = @(
+        "e9acab5b5fbb560a72cfaecce8946896ff6aab9d"
+    );
     "google-gdk-license" = @(
-        "33b6a2b649202da1b86e45817065ec74e1c45429"
+        "33b6a2b649202da1b86e45817065ec74e1c45429",
+        "33b6a2b64607f11b759f320ef9dff4ae5c47d97a"
+    );
+    "android-googletv-license" = @(
+        "601085b94cd77f0b54ff86406957099ebe79c4d6"
+    );
+    "android-googlexr-license" = @(
+        "ceff83576aac4f7f37cb98fe189e9fb3c49d3b81"
+    );
+    "microxr-sysimage-license" = @(
+        "3a7848b1d7366ca5cfa0be477627644ca73f47e3"
     )
 }
 

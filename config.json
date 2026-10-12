@@ -325,7 +325,9 @@
     "packagesToInstall": [
       "platform-tools",
       "cmdline-tools;latest",
+      "build-tools;36.0.0",
       "build-tools;34.0.0",
+      "platforms;android-36",
       "platforms;android-34",
       "extras;google;m2repository"
     ]
@@ -382,6 +384,7 @@
       "C:\\Tools\\flutter\\bin",
       "C:\\Android\\android-sdk\\cmdline-tools\\latest\\bin",
       "C:\\Android\\android-sdk\\platform-tools",
+      "C:\\Android\\android-sdk\\build-tools\\36.0.0",
       "C:\\Android\\android-sdk\\build-tools\\34.0.0",
       "C:\\Tools\\gradle\\bin",
       "C:\\Program Files\\Git\\cmd",
